@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Wheel Controller',
+      title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
@@ -32,13 +32,13 @@ class WheelControllerPage extends StatefulWidget {
   const WheelControllerPage({super.key});
 
   @override
-  State<WheelControllerPage> createState() =>
-      _WheelControllerPageState();
+  State<WheelControllerPage> createState() {
+    return _WheelControllerPageState();
+  }
 }
 
 class _WheelControllerPageState extends State<WheelControllerPage> {
   static const String board = 'wheelbeh';
-
   static const String leftVariable = 'leftwheelspeed';
   static const String rightVariable = 'rightwheelspeed';
   static const String baseVariable = 'basesize';
@@ -46,14 +46,11 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
   int leftWheelSpeed = 0;
   int rightWheelSpeed = 0;
-
   double baseSize = 0.4;
   double wheelRadius = 0.05;
-
   double robotX = 0;
   double robotY = 0;
   double robotAngle = math.pi / 2;
-
   bool isRunning = false;
 
   Timer? timer;
@@ -76,65 +73,36 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     super.dispose();
   }
 
-  Future<double> _readValue(
-      String variable,
-      double defaultValue,
-      ) async {
+  Future<double> _readValue(String variable) async {
     final url = Uri.parse(
       'https://iocontrol.ru/api/readData/$board/$variable',
     );
-
     final response = await http.get(url);
+    final data = jsonDecode(response.body);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      if (data['check'] == true) {
-        return double.tryParse(
-          data['value'].toString(),
-        ) ??
-            defaultValue;
-      }
-    }
-
-    return defaultValue;
+    return double.parse(
+      data['value'].toString(),
+    );
   }
 
   Future<void> _loadValues() async {
-    final values = await Future.wait<double>([
-      _readValue(leftVariable, 0),
-      _readValue(rightVariable, 0),
-      _readValue(baseVariable, 0.4),
-      _readValue(radiusVariable, 0.05),
-    ]);
-
-    if (!mounted) {
-      return;
-    }
+    final left = await _readValue(leftVariable);
+    final right = await _readValue(rightVariable);
+    final base = await _readValue(baseVariable);
+    final radius = await _readValue(radiusVariable);
 
     setState(() {
-      leftWheelSpeed =
-          values[0].clamp(-10.0, 10.0).round();
-
-      rightWheelSpeed =
-          values[1].clamp(-10.0, 10.0).round();
-
-      baseSize =
-          values[2].clamp(0.1, 1.0).toDouble();
-
-      wheelRadius =
-          values[3].clamp(0.01, 0.2).toDouble();
+      leftWheelSpeed = left.toInt();
+      rightWheelSpeed = right.toInt();
+      baseSize = base.clamp(0.1, 1.0);
+      wheelRadius = radius.clamp(0.01, 0.2);
     });
   }
 
-  Future<void> _sendValue(
-      String variable,
-      String value,
-      ) async {
+  Future<void> _sendValue(String variable, String value) async {
     final url = Uri.parse(
       'https://iocontrol.ru/api/sendData/$board/$variable/$value',
     );
-
     await http.get(url);
   }
 
@@ -163,21 +131,18 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   String get turningRadiusText {
-    if (leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return '—';
     }
-
     if (turningRadius == null) {
-      return '∞';
+      return 'inf';
     }
 
     return '${turningRadius!.toStringAsFixed(3)} м';
   }
 
   String get movementStatus {
-    if (leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
 
@@ -185,14 +150,12 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
-
       return 'Назад';
     }
 
     if (angularSpeed > 0) {
       return 'Поворот влево';
     }
-
     return 'Поворот вправо';
   }
 
@@ -217,18 +180,9 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
         }
 
         setState(() {
-          robotX +=
-              currentLinearSpeed *
-                  math.cos(robotAngle) *
-                  timeStep;
-
-          robotY +=
-              currentLinearSpeed *
-                  math.sin(robotAngle) *
-                  timeStep;
-
-          robotAngle -=
-              currentAngularSpeed * timeStep;
+          robotX += currentLinearSpeed * math.cos(robotAngle) * timeStep;
+          robotY += currentLinearSpeed * math.sin(robotAngle) * timeStep;
+          robotAngle -= currentAngularSpeed * timeStep;
 
           trail.add(
             Offset(robotX, robotY),
@@ -257,14 +211,12 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
     setState(() {
       isRunning = false;
-
       robotX = 0;
       robotY = 0;
       robotAngle = math.pi / 2;
 
-      trail
-        ..clear()
-        ..add(Offset.zero);
+      trail.clear();
+      trail.add(Offset.zero);
     });
   }
 
@@ -308,10 +260,10 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 max: 10,
                 divisions: 20,
                 onChanged: (newValue) {
-                  onChanged(newValue.round());
+                  onChanged(newValue.toInt());
                 },
                 onChangeEnd: (newValue) {
-                  onChangeEnd(newValue.round());
+                  onChangeEnd(newValue.toInt());
                 },
               ),
             ),
@@ -542,10 +494,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     );
   }
 
-  Widget _buildPhysicsRow(
-      String name,
-      String value,
-      ) {
+  Widget _buildPhysicsRow(String name, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 4,
@@ -633,7 +582,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                     robotX: robotX,
                     robotY: robotY,
                     robotAngle: robotAngle,
-                    baseSize: baseSize,
                     trail: trail,
                   ),
                 ),
@@ -726,24 +674,20 @@ class RobotPainter extends CustomPainter {
   final double robotX;
   final double robotY;
   final double robotAngle;
-  final double baseSize;
   final List<Offset> trail;
 
   static const double scale = 55;
+  static const double bodySize = 40;
 
   RobotPainter({
     required this.robotX,
     required this.robotY,
     required this.robotAngle,
-    required this.baseSize,
     required this.trail,
   });
 
   @override
-  void paint(
-      Canvas canvas,
-      Size size,
-      ) {
+  void paint(Canvas canvas, Size size) {
     final center = Offset(
       size.width / 2,
       size.height / 2,
@@ -774,12 +718,14 @@ class RobotPainter extends CustomPainter {
         );
       }
 
+      final trailPaint = Paint();
+      trailPaint.color = Colors.blue;
+      trailPaint.strokeWidth = 2;
+      trailPaint.style = PaintingStyle.stroke;
+
       canvas.drawPath(
         path,
-        Paint()
-          ..color = Colors.blue
-          ..strokeWidth = 2
-          ..style = PaintingStyle.stroke,
+        trailPaint,
       );
     }
 
@@ -787,11 +733,6 @@ class RobotPainter extends CustomPainter {
       center.dx + robotX * scale,
       center.dy + robotY * scale,
     );
-
-    final bodySize =
-    (baseSize * scale)
-        .clamp(25.0, 60.0)
-        .toDouble();
 
     canvas.save();
 
@@ -808,27 +749,20 @@ class RobotPainter extends CustomPainter {
       height: bodySize,
     );
 
-    canvas.drawRect(
-      body,
-      Paint()
-        ..color = Colors.blue.shade300
-        ..style = PaintingStyle.fill,
-    );
+    final bodyPaint = Paint();
+    bodyPaint.color = Colors.blue.shade300;
+    bodyPaint.style = PaintingStyle.fill;
 
     canvas.drawRect(
       body,
-      Paint()
-        ..color = Colors.black
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke,
+      bodyPaint,
     );
 
-    final wheelLength = bodySize * 0.55;
-
-    const wheelThickness = 7.0;
+    const double wheelLength = 22;
+    const double wheelThickness = 7;
 
     final rightWheel = Rect.fromCenter(
-      center: Offset(
+      center: const Offset(
         0,
         bodySize / 2 + 5,
       ),
@@ -837,7 +771,7 @@ class RobotPainter extends CustomPainter {
     );
 
     final leftWheel = Rect.fromCenter(
-      center: Offset(
+      center: const Offset(
         0,
         -bodySize / 2 - 5,
       ),
@@ -845,37 +779,40 @@ class RobotPainter extends CustomPainter {
       height: wheelThickness,
     );
 
+    final wheelPaint = Paint();
+    wheelPaint.color = Colors.black;
+
     canvas.drawRect(
       rightWheel,
-      Paint()..color = Colors.black,
+      wheelPaint,
     );
 
     canvas.drawRect(
       leftWheel,
-      Paint()..color = Colors.black,
+      wheelPaint,
     );
 
+    final frontLinePaint = Paint();
+    frontLinePaint.color = Colors.white;
+    frontLinePaint.strokeWidth = 3;
+
     canvas.drawLine(
-      Offset(
+      const Offset(
         bodySize / 2,
         -bodySize / 4,
       ),
-      Offset(
+      const Offset(
         bodySize / 2,
         bodySize / 4,
       ),
-      Paint()
-        ..color = Colors.white
-        ..strokeWidth = 3,
+      frontLinePaint,
     );
 
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(
-      covariant RobotPainter oldDelegate,
-      ) {
+  bool shouldRepaint(RobotPainter oldDelegate) {
     return true;
   }
 }
