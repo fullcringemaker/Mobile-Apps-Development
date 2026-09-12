@@ -931,11 +931,9 @@ class RobotPainter extends CustomPainter {
     );
 
     final wheelPaint = Paint();
-
     wheelPaint.color = Colors.black;
 
     canvas.drawRect(rightWheel, wheelPaint);
-
     canvas.drawRect(leftWheel, wheelPaint);
 
     final frontLinePaint = Paint();
@@ -958,9 +956,7 @@ class RobotPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(
-      RobotPainter oldDelegate,
-      ) {
+  bool shouldRepaint(RobotPainter oldDelegate) {
     return true;
   }
 }
