@@ -133,26 +133,17 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           ],
         );
 
-        debugPrint(
-          'Первая запись создана в MySQL',
-        );
+        debugPrint('Первая запись создана в MySQL');
 
         return;
       }
 
       final row = result.first;
 
-      final loadedLeftWheelSpeed =
-      (row['leftwheelspeed'] as num).toInt();
-
-      final loadedRightWheelSpeed =
-      (row['rightwheelspeed'] as num).toInt();
-
-      final loadedBaseSize =
-      (row['basesize'] as num).toDouble();
-
-      final loadedWheelRadius =
-      (row['wheelradius'] as num).toDouble();
+      final loadedLeftWheelSpeed = (row['leftwheelspeed'] as num).toInt();
+      final loadedRightWheelSpeed = (row['rightwheelspeed'] as num).toInt();
+      final loadedBaseSize = (row['basesize'] as num).toDouble();
+      final loadedWheelRadius = (row['wheelradius'] as num).toDouble();
 
       if (!mounted) {
         return;
@@ -160,31 +151,14 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
       setState(() {
         leftWheelSpeed = loadedLeftWheelSpeed;
-
         rightWheelSpeed = loadedRightWheelSpeed;
-
-        baseSize = loadedBaseSize
-            .clamp(
-          0.1,
-          1.0,
-        )
-            .toDouble();
-
-        wheelRadius = loadedWheelRadius
-            .clamp(
-          0.01,
-          0.2,
-        )
-            .toDouble();
+        baseSize = loadedBaseSize.clamp(0.1, 1.0).toDouble();
+        wheelRadius = loadedWheelRadius.clamp(0.01, 0.2).toDouble();
       });
 
-      debugPrint(
-        'Последние значения загружены из MySQL',
-      );
-    } catch (error) {
-      debugPrint(
-        'Ошибка загрузки данных из MySQL: $error',
-      );
+      debugPrint('Последние значения загружены из MySQL');
+    } catch (_) {
+      return;
     } finally {
       if (connection != null) {
         await connection.close();
@@ -217,13 +191,9 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
         ],
       );
 
-      debugPrint(
-        'Новая запись добавлена в MySQL',
-      );
-    } catch (error) {
-      debugPrint(
-        'Ошибка сохранения данных в MySQL: $error',
-      );
+      debugPrint('Новая запись добавлена в MySQL');
+    } catch (_) {
+      return;
     } finally {
       if (connection != null) {
         await connection.close();
@@ -247,17 +217,13 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   double get angularSpeed {
-    return (
-        rightLinearSpeed -
-            leftLinearSpeed
-    ) / baseSize;
+    return (rightLinearSpeed - leftLinearSpeed) / baseSize;
   }
 
   double? get turningRadius {
     if (angularSpeed.abs() < 0.000001) {
       return null;
     }
-
     return (linearSpeed / angularSpeed).abs();
   }
 
@@ -265,19 +231,14 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return '—';
     }
-
     if (turningRadius == null) {
       return 'inf';
     }
-
     return '${turningRadius!.toStringAsFixed(3)} м';
   }
 
   String get movementStatus {
-    if (
-    leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0
-    ) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
 
@@ -285,14 +246,12 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
-
       return 'Назад';
     }
 
     if (angularSpeed > 0) {
       return 'Поворот влево';
     }
-
     return 'Поворот вправо';
   }
 
@@ -309,7 +268,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       const Duration(milliseconds: 40),
           (_) {
         final currentLinearSpeed = linearSpeed;
-
         final currentAngularSpeed = angularSpeed;
 
         if (currentLinearSpeed.abs() < 0.000001 && currentAngularSpeed.abs() < 0.000001) {
@@ -659,10 +617,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     );
   }
 
-  Widget _buildPhysicsRow(
-      String name,
-      String value,
-      ) {
+  Widget _buildPhysicsRow(String name, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 4,
@@ -811,9 +766,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -899,10 +852,8 @@ class RobotPainter extends CustomPainter {
       final path = Path();
 
       final firstPoint = Offset(
-        center.dx +
-            trail.first.dx * scale,
-        center.dy +
-            trail.first.dy * scale,
+        center.dx + trail.first.dx * scale,
+        center.dy + trail.first.dy * scale,
       );
 
       path.moveTo(
@@ -910,16 +861,10 @@ class RobotPainter extends CustomPainter {
         firstPoint.dy,
       );
 
-      for (
-      int i = 1;
-      i < trail.length;
-      i++
-      ) {
+      for (int i = 1; i < trail.length; i++) {
         final point = Offset(
-          center.dx +
-              trail[i].dx * scale,
-          center.dy +
-              trail[i].dy * scale,
+          center.dx + trail[i].dx * scale,
+          center.dy + trail[i].dy * scale,
         );
 
         path.lineTo(
@@ -932,13 +877,9 @@ class RobotPainter extends CustomPainter {
 
       trailPaint.color = Colors.blue;
       trailPaint.strokeWidth = 2;
-      trailPaint.style =
-          PaintingStyle.stroke;
+      trailPaint.style = PaintingStyle.stroke;
 
-      canvas.drawPath(
-        path,
-        trailPaint,
-      );
+      canvas.drawPath(path, trailPaint);
     }
 
     final robotPosition = Offset(
@@ -953,9 +894,7 @@ class RobotPainter extends CustomPainter {
       robotPosition.dy,
     );
 
-    canvas.rotate(
-      robotAngle,
-    );
+    canvas.rotate(robotAngle);
 
     final body = Rect.fromCenter(
       center: Offset.zero,
@@ -968,10 +907,7 @@ class RobotPainter extends CustomPainter {
     bodyPaint.color = Colors.blue.shade300;
     bodyPaint.style = PaintingStyle.fill;
 
-    canvas.drawRect(
-      body,
-      bodyPaint,
-    );
+    canvas.drawRect(body, bodyPaint);
 
     const double wheelLength = 22;
     const double wheelThickness = 7;
@@ -996,18 +932,11 @@ class RobotPainter extends CustomPainter {
 
     final wheelPaint = Paint();
 
-    wheelPaint.color =
-        Colors.black;
+    wheelPaint.color = Colors.black;
 
-    canvas.drawRect(
-      rightWheel,
-      wheelPaint,
-    );
+    canvas.drawRect(rightWheel, wheelPaint);
 
-    canvas.drawRect(
-      leftWheel,
-      wheelPaint,
-    );
+    canvas.drawRect(leftWheel, wheelPaint);
 
     final frontLinePaint = Paint();
     frontLinePaint.color = Colors.white;
