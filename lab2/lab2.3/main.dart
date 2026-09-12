@@ -61,7 +61,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
   int leftWheelSpeed = 0;
   int rightWheelSpeed = 0;
-
   double baseSize = 0.4;
   double wheelRadius = 0.05;
 
@@ -75,15 +74,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
   final List<TrofimenkoLogRow> logRows = [];
 
-  final ScrollController logVerticalController =
-  ScrollController();
-
-  final ScrollController logHorizontalController =
-  ScrollController();
-
-  bool isLogLoading = false;
-
-  String? logError;
+  final ScrollController logVerticalController = ScrollController();
+  final ScrollController logHorizontalController = ScrollController();
 
   Future<void> saveQueue = Future<void>.value();
 
@@ -96,7 +88,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   @override
   void initState() {
     super.initState();
-
     _loadInitialData();
   }
 
@@ -131,9 +122,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     await _loadLogValues();
   }
 
-  Future<int> _getNextId(
-      MySqlConnection connection,
-      ) async {
+  Future<int> _getNextId(MySqlConnection connection) async {
     final result = await connection.query(
       '''
       SELECT COALESCE(MAX(id), 0) + 1 AS next_id
@@ -144,9 +133,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     return (result.first['next_id'] as num).toInt();
   }
 
-  Future<void> _insertCurrentValues(
-      MySqlConnection connection,
-      ) async {
+  Future<void> _insertCurrentValues(MySqlConnection connection,) async {
     final nextId = await _getNextId(
       connection,
     );
@@ -197,27 +184,15 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
         await _insertCurrentValues(
           connection,
         );
-
-        debugPrint(
-          'Первая запись создана в Trofimenko_log',
-        );
-
         return;
       }
 
       final row = result.first;
 
-      final loadedLeftWheelSpeed =
-      (row['leftwheelspeed'] as num).toInt();
-
-      final loadedRightWheelSpeed =
-      (row['rightwheelspeed'] as num).toInt();
-
-      final loadedBaseSize =
-      (row['basesize'] as num).toDouble();
-
-      final loadedWheelRadius =
-      (row['wheelradius'] as num).toDouble();
+      final loadedLeftWheelSpeed = (row['leftwheelspeed'] as num).toInt();
+      final loadedRightWheelSpeed = (row['rightwheelspeed'] as num).toInt();
+      final loadedBaseSize = (row['basesize'] as num).toDouble();
+      final loadedWheelRadius = (row['wheelradius'] as num).toDouble();
 
       if (!mounted) {
         return;
@@ -225,31 +200,13 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
       setState(() {
         leftWheelSpeed = loadedLeftWheelSpeed;
-
         rightWheelSpeed = loadedRightWheelSpeed;
 
-        baseSize = loadedBaseSize
-            .clamp(
-          0.1,
-          1.0,
-        )
-            .toDouble();
-
-        wheelRadius = loadedWheelRadius
-            .clamp(
-          0.01,
-          0.2,
-        )
-            .toDouble();
+        baseSize = loadedBaseSize.clamp(0.1, 1.0).toDouble();
+        wheelRadius = loadedWheelRadius.clamp(0.01, 0.2).toDouble();
       });
-
-      debugPrint(
-        'Последние значения загружены из Trofimenko_log',
-      );
-    } catch (error) {
-      debugPrint(
-        'Ошибка загрузки данных из Trofimenko_log: $error',
-      );
+    } catch (_) {
+      return;
     } finally {
       if (connection != null) {
         await connection.close();
@@ -259,13 +216,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
   Future<void> _loadLogValues() async {
     MySqlConnection? connection;
-
-    if (mounted) {
-      setState(() {
-        isLogLoading = true;
-        logError = null;
-      });
-    }
 
     try {
       connection = await _openConnection();
@@ -289,14 +239,10 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
         loadedRows.add(
           TrofimenkoLogRow(
             id: (row['id'] as num).toInt(),
-            leftWheelSpeed:
-            (row['leftwheelspeed'] as num).toInt(),
-            rightWheelSpeed:
-            (row['rightwheelspeed'] as num).toInt(),
-            baseSize:
-            (row['basesize'] as num).toDouble(),
-            wheelRadius:
-            (row['wheelradius'] as num).toDouble(),
+            leftWheelSpeed: (row['leftwheelspeed'] as num).toInt(),
+            rightWheelSpeed: (row['rightwheelspeed'] as num).toInt(),
+            baseSize: (row['basesize'] as num).toDouble(),
+            wheelRadius: (row['wheelradius'] as num).toDouble(),
           ),
         );
       }
@@ -308,30 +254,13 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       setState(() {
         logRows.clear();
 
-        logRows.addAll(
-          loadedRows,
-        );
+        logRows.addAll(loadedRows);
       });
-    } catch (error) {
-      debugPrint(
-        'Ошибка загрузки журнала Trofimenko_log: $error',
-      );
-
-      if (mounted) {
-        setState(() {
-          logError =
-          'Не удалось загрузить данные из Trofimenko_log';
-        });
-      }
+    } catch (_) {
+      return;
     } finally {
       if (connection != null) {
         await connection.close();
-      }
-
-      if (mounted) {
-        setState(() {
-          isLogLoading = false;
-        });
       }
     }
   }
@@ -353,22 +282,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       await _insertCurrentValues(
         connection,
       );
-
-      debugPrint(
-        'Добавлена новая запись в журнал',
-      );
-    } catch (error) {
-      debugPrint(
-        'Ошибка сохранения данных в Trofimenko_log: $error',
-      );
-
-      if (mounted) {
-        setState(() {
-          logError =
-          'Не удалось сохранить запись в Trofimenko_log';
-        });
-      }
-
+    } catch (_) {
       return;
     } finally {
       if (connection != null) {
@@ -388,17 +302,11 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   double get linearSpeed {
-    return (
-        leftLinearSpeed +
-            rightLinearSpeed
-    ) / 2;
+    return (leftLinearSpeed + rightLinearSpeed) / 2;
   }
 
   double get angularSpeed {
-    return (
-        rightLinearSpeed -
-            leftLinearSpeed
-    ) / baseSize;
+    return (rightLinearSpeed - leftLinearSpeed) / baseSize;
   }
 
   double? get turningRadius {
@@ -410,10 +318,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   String get turningRadiusText {
-    if (
-    leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0
-    ) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return '—';
     }
 
@@ -425,10 +330,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   String get movementStatus {
-    if (
-    leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0
-    ) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
 
@@ -436,7 +338,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
-
       return 'Назад';
     }
 
@@ -457,37 +358,19 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     });
 
     timer = Timer.periodic(
-      const Duration(
-        milliseconds: 40,
-      ),
-          (_) {
-        final currentLinearSpeed =
-            linearSpeed;
+      const Duration(milliseconds: 40), (_) {
+        final currentLinearSpeed = linearSpeed;
 
-        final currentAngularSpeed =
-            angularSpeed;
+        final currentAngularSpeed = angularSpeed;
 
-        if (
-        currentLinearSpeed.abs() < 0.000001 &&
-            currentAngularSpeed.abs() < 0.000001
-        ) {
+        if (currentLinearSpeed.abs() < 0.000001 && currentAngularSpeed.abs() < 0.000001) {
           return;
         }
 
         setState(() {
-          robotX +=
-              currentLinearSpeed *
-                  math.cos(robotAngle) *
-                  timeStep;
-
-          robotY +=
-              currentLinearSpeed *
-                  math.sin(robotAngle) *
-                  timeStep;
-
-          robotAngle -=
-              currentAngularSpeed *
-                  timeStep;
+          robotX += currentLinearSpeed * math.cos(robotAngle) * timeStep;
+          robotY += currentLinearSpeed * math.sin(robotAngle) * timeStep;
+          robotAngle -= currentAngularSpeed * timeStep;
 
           trail.add(
             Offset(
@@ -524,9 +407,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
       robotX = 0;
       robotY = 0;
-
-      robotAngle =
-          math.pi / 2;
+      robotAngle = math.pi / 2;
 
       trail.clear();
 
@@ -539,13 +420,16 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   Widget _buildWheelSlider({
     required String title,
     required int value,
-    required ValueChanged<int> onChanged,
-    required ValueChanged<int> onChangeEnd,
+    required ValueChanged<int>
+    onChanged,
+    required ValueChanged<int>
+    onChangeEnd,
   }) {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding:
+        const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,
         ),
@@ -555,10 +439,13 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           children: [
             Text(
               title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
+              textAlign:
+              TextAlign.center,
+              style:
+              const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
             const SizedBox(
@@ -566,24 +453,29 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
             ),
             Text(
               '$value рад/с',
-              style: const TextStyle(
+              style:
+              const TextStyle(
                 fontSize: 17,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
             SizedBox(
               height: 32,
               child: Slider(
-                value: value.toDouble(),
+                value:
+                value.toDouble(),
                 min: -10,
                 max: 10,
                 divisions: 20,
-                onChanged: (newValue) {
+                onChanged:
+                    (newValue) {
                   onChanged(
                     newValue.toInt(),
                   );
                 },
-                onChangeEnd: (newValue) {
+                onChangeEnd:
+                    (newValue) {
                   onChangeEnd(
                     newValue.toInt(),
                   );
@@ -592,7 +484,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
             ),
             const Row(
               mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+              MainAxisAlignment
+                  .spaceBetween,
               children: [
                 Text(
                   '-10',
@@ -627,13 +520,16 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     required double max,
     required int divisions,
     required int digits,
-    required ValueChanged<double> onChanged,
-    required ValueChanged<double> onChangeEnd,
+    required ValueChanged<double>
+    onChanged,
+    required ValueChanged<double>
+    onChangeEnd,
   }) {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding:
+        const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,
         ),
@@ -643,10 +539,13 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           children: [
             Text(
               title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
+              textAlign:
+              TextAlign.center,
+              style:
+              const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
             const SizedBox(
@@ -654,9 +553,11 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
             ),
             Text(
               '${value.toStringAsFixed(digits)} м',
-              style: const TextStyle(
+              style:
+              const TextStyle(
                 fontSize: 17,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
             SizedBox(
@@ -665,20 +566,25 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 value: value,
                 min: min,
                 max: max,
-                divisions: divisions,
-                onChanged: onChanged,
-                onChangeEnd: onChangeEnd,
+                divisions:
+                divisions,
+                onChanged:
+                onChanged,
+                onChangeEnd:
+                onChangeEnd,
               ),
             ),
             Row(
               mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+              MainAxisAlignment
+                  .spaceBetween,
               children: [
                 Text(
                   min.toStringAsFixed(
                     digits,
                   ),
-                  style: const TextStyle(
+                  style:
+                  const TextStyle(
                     fontSize: 10,
                   ),
                 ),
@@ -686,7 +592,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                   max.toStringAsFixed(
                     digits,
                   ),
-                  style: const TextStyle(
+                  style:
+                  const TextStyle(
                     fontSize: 10,
                   ),
                 ),
@@ -705,18 +612,21 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           child: Column(
             children: [
               Expanded(
-                child: _buildWheelSlider(
+                child:
+                _buildWheelSlider(
                   title:
                   'Скорость левого колеса',
                   value:
                   leftWheelSpeed,
-                  onChanged: (value) {
+                  onChanged:
+                      (value) {
                     setState(() {
                       leftWheelSpeed =
                           value;
                     });
                   },
-                  onChangeEnd: (value) {
+                  onChangeEnd:
+                      (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -725,18 +635,21 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 height: 6,
               ),
               Expanded(
-                child: _buildWheelSlider(
+                child:
+                _buildWheelSlider(
                   title:
                   'Скорость правого колеса',
                   value:
                   rightWheelSpeed,
-                  onChanged: (value) {
+                  onChanged:
+                      (value) {
                     setState(() {
                       rightWheelSpeed =
                           value;
                     });
                   },
-                  onChangeEnd: (value) {
+                  onChangeEnd:
+                      (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -751,7 +664,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           child: Column(
             children: [
               Expanded(
-                child: _buildSizeSlider(
+                child:
+                _buildSizeSlider(
                   title:
                   'Размер базы',
                   value:
@@ -760,13 +674,15 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                   max: 1.0,
                   divisions: 90,
                   digits: 2,
-                  onChanged: (value) {
+                  onChanged:
+                      (value) {
                     setState(() {
                       baseSize =
                           value;
                     });
                   },
-                  onChangeEnd: (value) {
+                  onChangeEnd:
+                      (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -775,7 +691,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 height: 6,
               ),
               Expanded(
-                child: _buildSizeSlider(
+                child:
+                _buildSizeSlider(
                   title:
                   'Радиус колеса',
                   value:
@@ -784,13 +701,15 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                   max: 0.2,
                   divisions: 19,
                   digits: 2,
-                  onChanged: (value) {
+                  onChanged:
+                      (value) {
                     setState(() {
                       wheelRadius =
                           value;
                     });
                   },
-                  onChangeEnd: (value) {
+                  onChangeEnd:
+                      (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -808,12 +727,14 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       child: SizedBox(
         width: double.infinity,
         child: Padding(
-          padding: const EdgeInsets.all(
+          padding:
+          const EdgeInsets.all(
             10,
           ),
           child: Column(
             mainAxisAlignment:
-            MainAxisAlignment.center,
+            MainAxisAlignment
+                .center,
             children: [
               const Text(
                 'Статус движения',
@@ -832,7 +753,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 movementStatus,
                 textAlign:
                 TextAlign.center,
-                style: const TextStyle(
+                style:
+                const TextStyle(
                   fontSize: 19,
                   fontWeight:
                   FontWeight.bold,
@@ -845,12 +767,10 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     );
   }
 
-  Widget _buildPhysicsRow(
-      String name,
-      String value,
-      ) {
+  Widget _buildPhysicsRow(String name, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         vertical: 1,
       ),
       child: Row(
@@ -858,7 +778,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(
+              style:
+              const TextStyle(
                 fontSize: 11,
               ),
             ),
@@ -868,7 +789,8 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
           ),
           Text(
             value,
-            style: const TextStyle(
+            style:
+            const TextStyle(
               fontSize: 11,
               fontWeight:
               FontWeight.bold,
@@ -885,12 +807,14 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       child: SizedBox(
         width: double.infinity,
         child: Padding(
-          padding: const EdgeInsets.all(
+          padding:
+          const EdgeInsets.all(
             6,
           ),
           child: Column(
             mainAxisAlignment:
-            MainAxisAlignment.center,
+            MainAxisAlignment
+                .center,
             children: [
               const Text(
                 'Параметры движения',
@@ -930,14 +854,16 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       child: SizedBox(
         width: double.infinity,
         child: Padding(
-          padding: const EdgeInsets.all(
+          padding:
+          const EdgeInsets.all(
             8,
           ),
           child: Column(
             children: [
               const Text(
                 'Журнал записей',
-                textAlign: TextAlign.center,
+                textAlign:
+                TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -948,152 +874,127 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                 height: 6,
               ),
               Expanded(
-                child: Builder(
-                  builder: (context) {
-                    if (
-                    isLogLoading &&
-                        logRows.isEmpty
-                    ) {
-                      return const Center(
-                        child:
-                        CircularProgressIndicator(),
-                      );
-                    }
-
-                    if (
-                    logError != null &&
-                        logRows.isEmpty
-                    ) {
-                      return Center(
-                        child: Text(
-                          logError!,
-                          textAlign:
-                          TextAlign.center,
-                          style:
-                          const TextStyle(
-                            fontSize: 12,
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (logRows.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'Записей пока нет',
-                          style: TextStyle(
-                            fontSize: 12,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Scrollbar(
+                child: logRows.isEmpty
+                    ? const Center(
+                  child: Text(
+                    'Записей пока нет',
+                    style:
+                    TextStyle(
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+                    : Scrollbar(
+                  controller:
+                  logVerticalController,
+                  thumbVisibility:
+                  true,
+                  child:
+                  SingleChildScrollView(
+                    controller:
+                    logVerticalController,
+                    scrollDirection:
+                    Axis.vertical,
+                    child:
+                    Scrollbar(
                       controller:
-                      logVerticalController,
-                      thumbVisibility: true,
+                      logHorizontalController,
+                      thumbVisibility:
+                      true,
                       child:
                       SingleChildScrollView(
                         controller:
-                        logVerticalController,
+                        logHorizontalController,
                         scrollDirection:
-                        Axis.vertical,
-                        child: Scrollbar(
-                          controller:
-                          logHorizontalController,
-                          thumbVisibility:
-                          true,
-                          child:
-                          SingleChildScrollView(
-                            controller:
-                            logHorizontalController,
-                            scrollDirection:
-                            Axis.horizontal,
-                            child: DataTable(
-                              headingRowHeight:
-                              34,
-                              dataRowMinHeight:
-                              32,
-                              dataRowMaxHeight:
-                              32,
-                              horizontalMargin:
-                              10,
-                              columnSpacing:
-                              18,
-                              columns:
-                              const [
-                                DataColumn(
-                                  label: Text(
-                                    'id',
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'leftwheelspeed',
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'rightwheelspeed',
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'basesize',
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'wheelradius',
-                                  ),
-                                ),
-                              ],
-                              rows:
-                              logRows.map(
-                                    (row) {
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(
-                                        Text(
-                                          '${row.id}',
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(
-                                          '${row.leftWheelSpeed}',
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(
-                                          '${row.rightWheelSpeed}',
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(
-                                          row.baseSize
-                                              .toStringAsFixed(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Text(
-                                          row.wheelRadius
-                                              .toStringAsFixed(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ).toList(),
+                        Axis.horizontal,
+                        child:
+                        DataTable(
+                          headingRowHeight:
+                          34,
+                          dataRowMinHeight:
+                          32,
+                          dataRowMaxHeight:
+                          32,
+                          horizontalMargin:
+                          10,
+                          columnSpacing:
+                          18,
+                          columns:
+                          const [
+                            DataColumn(
+                              label:
+                              Text(
+                                'id',
+                              ),
                             ),
-                          ),
+                            DataColumn(
+                              label:
+                              Text(
+                                'leftwheelspeed',
+                              ),
+                            ),
+                            DataColumn(
+                              label:
+                              Text(
+                                'rightwheelspeed',
+                              ),
+                            ),
+                            DataColumn(
+                              label:
+                              Text(
+                                'basesize',
+                              ),
+                            ),
+                            DataColumn(
+                              label:
+                              Text(
+                                'wheelradius',
+                              ),
+                            ),
+                          ],
+                          rows:
+                          logRows
+                              .map(
+                                (row) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Text(
+                                      '${row.id}',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      '${row.leftWheelSpeed}',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      '${row.rightWheelSpeed}',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      row.baseSize.toStringAsFixed(
+                                        2,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      row.wheelRadius.toStringAsFixed(
+                                        2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ).toList(),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1107,40 +1008,27 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(
-          8,
-        ),
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             Expanded(
               child: Container(
-                width:
-                double.infinity,
-                clipBehavior:
-                Clip.hardEdge,
-                decoration:
-                BoxDecoration(
-                  border:
-                  Border.all(
-                    color:
-                    Colors.grey,
+                width: double.infinity,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey,
                   ),
-                  borderRadius:
-                  BorderRadius.circular(
-                    10,
-                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: CustomPaint(
+                child:
+                CustomPaint(
                   painter:
                   RobotPainter(
-                    robotX:
-                    robotX,
-                    robotY:
-                    robotY,
-                    robotAngle:
-                    robotAngle,
-                    trail:
-                    trail,
+                    robotX: robotX,
+                    robotY: robotY,
+                    robotAngle: robotAngle,
+                    trail: trail,
                   ),
                 ),
               ),
@@ -1151,20 +1039,11 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
             Row(
               children: [
                 Expanded(
-                  child:
-                  SizedBox(
+                  child: SizedBox(
                     height: 36,
-                    child:
-                    FilledButton(
-                      onPressed:
-                      isRunning
-                          ? _stopSimulation
-                          : _startSimulation,
-                      child:
-                      Text(
-                        isRunning
-                            ? 'Стоп'
-                            : 'Старт',
+                    child: FilledButton(
+                      onPressed: isRunning ? _stopSimulation : _startSimulation,
+                      child: Text(isRunning ? 'Стоп' : 'Старт',
                       ),
                     ),
                   ),
@@ -1173,17 +1052,11 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                   width: 6,
                 ),
                 Expanded(
-                  child:
-                  SizedBox(
+                  child: SizedBox(
                     height: 36,
-                    child:
-                    OutlinedButton(
-                      onPressed:
-                      _resetSimulation,
-                      child:
-                      const Text(
-                        'Сбросить',
-                      ),
+                    child: OutlinedButton(
+                      onPressed: _resetSimulation,
+                      child: const Text('Сбросить'),
                     ),
                   ),
                 ),
@@ -1196,22 +1069,18 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding:
-          const EdgeInsets.all(
+          padding: const EdgeInsets.all(
             8,
           ),
           child: Column(
             children: [
               Expanded(
                 flex: 4,
-                child:
-                _buildControls(),
+                child: _buildControls(),
               ),
               const SizedBox(
                 height: 8,
@@ -1222,8 +1091,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                   children: [
                     Expanded(
                       flex: 3,
-                      child:
-                      _buildSimulationPanel(),
+                      child: _buildSimulationPanel(),
                     ),
                     const SizedBox(
                       width: 8,
@@ -1234,24 +1102,21 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
                         children: [
                           Expanded(
                             flex: 2,
-                            child:
-                            _buildStatusPanel(),
+                            child: _buildStatusPanel(),
                           ),
                           const SizedBox(
                             height: 8,
                           ),
                           Expanded(
                             flex: 2,
-                            child:
-                            _buildPhysicsPanel(),
+                            child: _buildPhysicsPanel(),
                           ),
                           const SizedBox(
                             height: 8,
                           ),
                           Expanded(
                             flex: 4,
-                            child:
-                            _buildLogPanel(),
+                            child: _buildLogPanel(),
                           ),
                         ],
                       ),
@@ -1284,10 +1149,7 @@ class RobotPainter extends CustomPainter {
   });
 
   @override
-  void paint(
-      Canvas canvas,
-      Size size,
-      ) {
+  void paint(Canvas canvas, Size size) {
     final center = Offset(
       size.width / 2,
       size.height / 2,
@@ -1297,12 +1159,8 @@ class RobotPainter extends CustomPainter {
       final path = Path();
 
       final firstPoint = Offset(
-        center.dx +
-            trail.first.dx *
-                scale,
-        center.dy +
-            trail.first.dy *
-                scale,
+        center.dx + trail.first.dx * scale,
+        center.dy + trail.first.dy * scale,
       );
 
       path.moveTo(
@@ -1310,19 +1168,10 @@ class RobotPainter extends CustomPainter {
         firstPoint.dy,
       );
 
-      for (
-      int i = 1;
-      i < trail.length;
-      i++
-      ) {
-        final point =
-        Offset(
-          center.dx +
-              trail[i].dx *
-                  scale,
-          center.dy +
-              trail[i].dy *
-                  scale,
+      for (int i = 1; i < trail.length; i++) {
+        final point = Offset(
+          center.dx + trail[i].dx * scale,
+          center.dy + trail[i].dy * scale,
         );
 
         path.lineTo(
@@ -1331,32 +1180,17 @@ class RobotPainter extends CustomPainter {
         );
       }
 
-      final trailPaint =
-      Paint();
-
-      trailPaint.color =
-          Colors.blue;
-
-      trailPaint.strokeWidth =
-      2;
-
-      trailPaint.style =
-          PaintingStyle.stroke;
-
-      canvas.drawPath(
-        path,
-        trailPaint,
-      );
+      final trailPaint = Paint();
+      trailPaint.color = Colors.blue;
+      trailPaint.strokeWidth = 2;
+      trailPaint.style = PaintingStyle.stroke;
+      canvas.drawPath(path, trailPaint);
     }
 
     final robotPosition =
     Offset(
-      center.dx +
-          robotX *
-              scale,
-      center.dy +
-          robotY *
-              scale,
+      center.dx + robotX * scale,
+      center.dy + robotY * scale,
     );
 
     canvas.save();
@@ -1366,90 +1200,49 @@ class RobotPainter extends CustomPainter {
       robotPosition.dy,
     );
 
-    canvas.rotate(
-      robotAngle,
+    canvas.rotate(robotAngle,);
+
+    final body = Rect.fromCenter(
+      center: Offset.zero,
+      width: bodySize,
+      height: bodySize,
     );
 
-    final body =
-    Rect.fromCenter(
-      center:
-      Offset.zero,
-      width:
-      bodySize,
-      height:
-      bodySize,
-    );
+    final bodyPaint = Paint();
+    bodyPaint.color = Colors.blue.shade300;
+    bodyPaint.style = PaintingStyle.fill;
+    canvas.drawRect(body, bodyPaint);
 
-    final bodyPaint =
-    Paint();
-
-    bodyPaint.color =
-        Colors.blue.shade300;
-
-    bodyPaint.style =
-        PaintingStyle.fill;
-
-    canvas.drawRect(
-      body,
-      bodyPaint,
-    );
-
-    const double wheelLength =
-    22;
-
-    const double wheelThickness =
-    7;
+    const double wheelLength = 22;
+    const double wheelThickness = 7;
 
     final rightWheel =
     Rect.fromCenter(
-      center:
-      const Offset(
+      center: const Offset(
         0,
         bodySize / 2 + 5,
       ),
-      width:
-      wheelLength,
-      height:
-      wheelThickness,
+      width: wheelLength,
+      height: wheelThickness,
     );
 
-    final leftWheel =
-    Rect.fromCenter(
-      center:
-      const Offset(
+    final leftWheel = Rect.fromCenter(
+      center: const Offset(
         0,
         -bodySize / 2 - 5,
       ),
-      width:
-      wheelLength,
-      height:
-      wheelThickness,
+      width: wheelLength,
+      height: wheelThickness,
     );
 
-    final wheelPaint =
-    Paint();
+    final wheelPaint = Paint();
+    wheelPaint.color = Colors.black;
+    canvas.drawRect(rightWheel, wheelPaint);
+    canvas.drawRect(leftWheel, wheelPaint);
 
-    wheelPaint.color =
-        Colors.black;
-
-    canvas.drawRect(
-      rightWheel,
-      wheelPaint,
-    );
-
-    canvas.drawRect(
-      leftWheel,
-      wheelPaint,
-    );
-
-    final frontLinePaint =
-    Paint();
-
-    frontLinePaint.color =
-        Colors.white;
-
-    frontLinePaint.strokeWidth =
-    3;
+    final frontLinePaint = Paint();
+    frontLinePaint.color = Colors.white;
+    frontLinePaint.strokeWidth = 3;
 
     canvas.drawLine(
       const Offset(
@@ -1467,9 +1260,7 @@ class RobotPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(
-      RobotPainter oldDelegate,
-      ) {
+  bool shouldRepaint(RobotPainter oldDelegate) {
     return true;
   }
 }
