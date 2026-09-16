@@ -38,67 +38,50 @@ class LaboratoryMenuPage extends StatefulWidget {
 }
 
 class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
-  int selectedLab = 0;
+  final PageController pageController = PageController(
+    viewportFraction: 0.88,
+  );
 
-  String getLabNumber() {
-    if (selectedLab == 0) {
-      return '01';
-    }
+  int currentPage = 0;
 
-    if (selectedLab == 1) {
-      return '02';
-    }
-
-    return '03';
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
   }
 
-  String getLabTitle() {
-    if (selectedLab == 0) {
+  String getLabNumber(int index) {
+    if (index == 0) {
+      return 'Лабораторная работа №1';
+    }
+
+    if (index == 1) {
+      return 'Лабораторная работа №2';
+    }
+
+    return 'Лабораторная работа №3';
+  }
+
+  String getLabTitle(int index) {
+    if (index == 0) {
       return 'Удалённый счётчик';
     }
 
-    if (selectedLab == 1) {
+    if (index == 1) {
       return 'Робот и IoControl';
     }
 
     return 'Робот и MySQL';
   }
 
-  String getLabDescription() {
-    if (selectedLab == 0) {
-      return 'Изменение значения счётчика с помощью '
-          'ползунка и сохранение значения в IoControl.';
-    }
-
-    if (selectedLab == 1) {
-      return 'Управление скоростями колёс и параметрами '
-          'робота через HTTP API IoControl.';
-    }
-
-    return 'Управление параметрами робота с сохранением '
-        'данных в MySQL и просмотром журнала записей.';
-  }
-
-  IconData getLabIcon() {
-    if (selectedLab == 0) {
-      return CupertinoIcons.slider_horizontal_3;
-    }
-
-    if (selectedLab == 1) {
-      return CupertinoIcons.antenna_radiowaves_left_right;
-    }
-
-    return CupertinoIcons.archivebox;
-  }
-
-  void openSelectedLab() {
+  void openLab(int index) {
     Widget page;
 
-    if (selectedLab == 0) {
+    if (index == 0) {
       page = const lab1.MyHomePage(
         title: 'Лабораторная работа №1',
       );
-    } else if (selectedLab == 1) {
+    } else if (index == 1) {
       page = const lab2.WheelControllerPage();
     } else {
       page = const lab3.WheelControllerPage();
@@ -113,195 +96,140 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
     );
   }
 
+  Widget buildPageIndicator(int index) {
+    double width = 8;
+    Color color = CupertinoColors.systemGrey3;
+
+    if (currentPage == index) {
+      width = 24;
+      color = CupertinoColors.systemBlue;
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(
+        milliseconds: 250,
+      ),
+      width: width,
+      height: 8,
+      margin: const EdgeInsets.symmetric(
+        horizontal: 4,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+
+  Widget buildLaboratoryCard(int index) {
+    return GestureDetector(
+      onTap: () {
+        openLab(index);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 30,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1E88E5),
+              Color(0xFF1565C0),
+            ],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 20,
+              offset: Offset(
+                0,
+                10,
+              ),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 25,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(getLabNumber(index),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 16,
+                ),
+
+                Text(getLabTitle(index),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground,
+      backgroundColor:
+      CupertinoColors.systemGroupedBackground,
       navigationBar: const CupertinoNavigationBar(
         middle: Text(
-          'Пульт лабораторных',
+          'Лабораторные работы',
         ),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 15,
-              ),
-
-              const Text(
-                'МОБИЛЬНАЯ ЛАБОРАТОРИЯ',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: CupertinoColors.systemGrey,
-                  letterSpacing: 1.5,
-                ),
-              ),
-
-              const SizedBox(
-                height: 25,
-              ),
-
-              CupertinoSlidingSegmentedControl<int>(
-                groupValue: selectedLab,
-                children: const {
-                  0: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      'ЛР 1',
-                    ),
-                  ),
-                  1: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      'ЛР 2',
-                    ),
-                  ),
-                  2: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      'ЛР 3',
-                    ),
-                  ),
-                },
-                onValueChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: pageController,
+                itemCount: 3,
+                onPageChanged: (index) {
                   setState(() {
-                    selectedLab = value;
+                    currentPage = index;
                   });
                 },
+                itemBuilder: (context, index) {
+                  return buildLaboratoryCard(index);
+                },
               ),
+            ),
 
-              const SizedBox(
-                height: 30,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildPageIndicator(0),
+                buildPageIndicator(1),
+                buildPageIndicator(2),
+              ],
+            ),
 
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(
-                        24,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(
-                            0x22000000,
-                          ),
-                          blurRadius: 15,
-                          offset: Offset(
-                            0,
-                            5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 85,
-                          height: 85,
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.systemBlue,
-                            borderRadius: BorderRadius.circular(
-                              22,
-                            ),
-                          ),
-                          child: Icon(
-                            getLabIcon(),
-                            size: 42,
-                            color: CupertinoColors.white,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 25,
-                        ),
-
-                        Text(
-                          'ЛАБОРАТОРНАЯ ${getLabNumber()}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: CupertinoColors.systemGrey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 8,
-                        ),
-
-                        Text(
-                          getLabTitle(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 15,
-                        ),
-
-                        Text(
-                          getLabDescription(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: CupertinoColors.systemGrey,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(
-                height: 25,
-              ),
-
-              SizedBox(
-                width: double.infinity,
-                child: CupertinoButton.filled(
-                  onPressed: openSelectedLab,
-                  child: const Text(
-                    'Запустить лабораторную',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(
-                height: 10,
-              ),
-            ],
-          ),
+            const SizedBox(
+              height: 22,
+            ),
+          ],
         ),
       ),
     );
