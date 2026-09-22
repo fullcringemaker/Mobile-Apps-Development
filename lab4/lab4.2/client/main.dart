@@ -313,8 +313,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
           if (item is Map) {
             loadedRows.add(TrofimenkoLogRow.fromJson(
                 Map<String, dynamic>.from(item),
-              ),
-            );
+              ));
           }
         }
 
@@ -461,8 +460,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                     Row(
                       children: [
                         IconButton(
-                          onPressed: selectedIndex >
-                              0
+                          onPressed: selectedIndex > 0
                               ? () {
                             setDialogState(
                                   () {
@@ -471,9 +469,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                             );
                           }
                               : null,
-
-                          icon:
-                          const Icon(Icons.chevron_left),
+                          icon: const Icon(Icons.chevron_left),
                         ),
 
                         Expanded(
