@@ -61,9 +61,7 @@ Future<void> main() async {
       continue;
     }
 
-    final socket = await WebSocketTransformer.upgrade(
-      request,
-    );
+    final socket = await WebSocketTransformer.upgrade(request);
 
     clients.add(socket);
 
@@ -93,12 +91,9 @@ Future<void> main() async {
 
 Future<void> loadData() async {
   if (!await storageFile.exists()) {
-    await storageFile.writeAsString(
-      '[]',
-    );
+    await storageFile.writeAsString('[]');
 
     print('New storage file created');
-
     return;
   }
 
@@ -133,8 +128,7 @@ Future<void> loadData() async {
 
     print('Loaded records: ${logRows.length}');
   } catch (error) {
-    print('Storage loading error: $error',
-    );
+    print('Storage loading error: $error');
   }
 }
 
@@ -158,8 +152,7 @@ Future<void> handleMessage(WebSocket socket, dynamic rawMessage) async {
     final decoded = jsonDecode(rawMessage.toString());
 
     if (decoded is! Map) {
-      sendError(socket, 'Incorrect message format',);
-
+      sendError(socket, 'Incorrect message format');
       return;
     }
 
@@ -169,7 +162,6 @@ Future<void> handleMessage(WebSocket socket, dynamic rawMessage) async {
 
     if (type == 'getSnapshot') {
       sendSnapshot(socket);
-
       return;
     }
 
@@ -178,7 +170,6 @@ Future<void> handleMessage(WebSocket socket, dynamic rawMessage) async {
 
       if (rawData is! Map) {
         sendError(socket, 'Data field is missing');
-
         return;
       }
 
@@ -191,7 +182,6 @@ Future<void> handleMessage(WebSocket socket, dynamic rawMessage) async {
 
       if (leftWheelSpeed is! num || rightWheelSpeed is! num || baseSize is! num || wheelRadius is! num) {
         sendError(socket, 'Incorrect robot values');
-
         return;
       }
 
@@ -222,7 +212,6 @@ Future<void> handleMessage(WebSocket socket, dynamic rawMessage) async {
         'type': 'saved',
         'row': row,
       });
-
       return;
     }
 
