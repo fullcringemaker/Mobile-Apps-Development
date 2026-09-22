@@ -87,7 +87,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
 
   double robotX = 0;
   double robotY = 0;
-
   double robotAngle = math.pi / 2;
 
   bool isRunning = false;
@@ -123,7 +122,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
     webSocket?.close();
 
     logVerticalController.dispose();
-
     logHorizontalController.dispose();
 
     super.dispose();
@@ -221,53 +219,53 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
 
       webSocketSubscription = socket.listen(
             (message) {
-              _handleServerMessage(message);
-              },
+          _handleServerMessage(message);
+        },
 
-            onDone: () {
-              if (webSocket != socket) {
-                return;
-              }
+        onDone: () {
+          if (webSocket != socket) {
+            return;
+          }
 
-              if (!mounted) {
-                return;
-              }
+          if (!mounted) {
+            return;
+          }
 
-              setState(() {
-                isConnected = false;
-                isConnecting = false;
-              });
+          setState(() {
+            isConnected = false;
+            isConnecting = false;
+          });
 
-              webSocket = null;
+          webSocket = null;
 
-              debugPrint('WebSocket disconnected');
+          debugPrint('WebSocket disconnected');
 
-              _showServerDisconnectedDialog();
-            },
+          _showServerDisconnectedDialog();
+        },
 
-            onError: (error) {
-              if (webSocket != socket) {
-                return;
-              }
+        onError: (error) {
+          if (webSocket != socket) {
+            return;
+          }
 
-              if (!mounted) {
-                return;
-              }
+          if (!mounted) {
+            return;
+          }
 
-              setState(() {
-                isConnected = false;
-                isConnecting = false;
-              });
+          setState(() {
+            isConnected = false;
+            isConnecting = false;
+          });
 
-              webSocket = null;
+          webSocket = null;
 
-              debugPrint('WebSocket error: $error',);
+          debugPrint('WebSocket error: $error',);
 
-              _showServerDisconnectedDialog();
-            },
+          _showServerDisconnectedDialog();
+        },
 
-            cancelOnError: true,
-          );
+        cancelOnError: true,
+      );
     } catch (error) {
 
       if (!mounted) {
@@ -312,8 +310,8 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
         for (final item in rawRows) {
           if (item is Map) {
             loadedRows.add(TrofimenkoLogRow.fromJson(
-                Map<String, dynamic>.from(item),
-              ));
+              Map<String, dynamic>.from(item),
+            ));
           }
         }
 
@@ -370,10 +368,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
       }
 
       if (type == 'error') {
-        debugPrint(
-          'Server error: '
-              '${message['message']}',
-        );
+        debugPrint('Server error: ${message['message']}');
       }
     } catch (error) {
       debugPrint('Message error: $error');
@@ -383,9 +378,9 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
   void _scheduleSaveValues() {
     saveQueue = saveQueue.then(
           (_) async {
-            await _saveValues();
-          },
-        );
+        await _saveValues();
+      },
+    );
   }
 
   Future<void> _saveValues() async {
@@ -446,17 +441,15 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Запись '
-                          '${selectedIndex + 1} '
-                          'из ${logRows.length}',
+                        '${selectedIndex + 1} '
+                        'из ${logRows.length}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(
                       height: 10,
                     ),
-
                     Row(
                       children: [
                         IconButton(
@@ -471,24 +464,17 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                               : null,
                           icon: const Icon(Icons.chevron_left),
                         ),
-
                         Expanded(
                           child: Slider(
                             value: selectedIndex.toDouble(),
                             min: 0,
-                            max: logRows.length >
-                                1
+                            max: logRows.length > 1
                                 ? (logRows.length - 1).toDouble()
                                 : 1,
-
-                            divisions: logRows.length >
-                                1
+                            divisions: logRows.length > 1
                                 ? logRows.length - 1
                                 : 1,
-
-                            onChanged:
-                            logRows.length >
-                                1
+                            onChanged: logRows.length > 1
                                 ? (value) {
                               setDialogState(
                                     () {
@@ -499,10 +485,8 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                                 : null,
                           ),
                         ),
-
                         IconButton(
-                          onPressed: selectedIndex <
-                              logRows.length - 1
+                          onPressed: selectedIndex < logRows.length - 1
                               ? () {
                             setDialogState(
                                   () {
@@ -511,13 +495,10 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                             );
                           }
                               : null,
-
-                          icon:
-                          const Icon(Icons.chevron_right),
+                          icon: const Icon(Icons.chevron_right),
                         ),
                       ],
                     ),
-
                     const Divider(),
                     _buildTimeMachineRow(
                       'Левое колесо',
@@ -538,20 +519,16 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                   ],
                 ),
               ),
-
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                   },
-
                   child: const Text('Закрыть'),
                 ),
-
                 FilledButton(
                   onPressed: () {
                     _restoreLogRow(row);
-
                     Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Восстановить'),
@@ -569,7 +546,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
       padding: const EdgeInsets.symmetric(
         vertical: 4,
       ),
-
       child: Row(
         children: [
           Expanded(
@@ -577,7 +553,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
           ),
           Text(
             value, style: const TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.bold
             ),
           ),
         ],
@@ -605,19 +581,16 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
     if (angularSpeed.abs() < 0.000001) {
       return null;
     }
-
     return (linearSpeed / angularSpeed).abs();
   }
 
   String get turningRadiusText {
-
     if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return '—';
     }
     if (turningRadius == null) {
       return 'inf';
     }
-
     return '${turningRadius!.toStringAsFixed(3)} м';
   }
 
@@ -625,23 +598,19 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
     if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
-
     if (leftWheelSpeed == rightWheelSpeed) {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
       return 'Назад';
     }
-
     if (angularSpeed > 0) {
       return 'Поворот влево';
     }
-
     return 'Поворот вправо';
   }
 
   void _startSimulation() {
-
     if (isRunning) {
       return;
     }
@@ -683,7 +652,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
   }
 
   void _stopSimulation() {
-
     timer?.cancel();
 
     timer = null;
@@ -699,7 +667,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
     timer = null;
 
     setState(() {
-
       isRunning = false;
 
       robotX = 0;
@@ -747,7 +714,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
               onChanged: (value) {
                 onChanged(value.toInt());
               },
-
               onChangeEnd: (value) {
                 onChangeEnd(value.toInt());
               },
@@ -869,8 +835,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                       baseSize = value;
                     });
                   },
-                  onChangeEnd:
-                      (value) {
+                  onChangeEnd: (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -888,8 +853,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                       wheelRadius = value;
                     });
                   },
-                  onChangeEnd:
-                      (value) {
+                  onChangeEnd: (value) {
                     _scheduleSaveValues();
                   },
                 ),
@@ -1008,65 +972,38 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                     child: DataTable(
                       columns: const [
                         DataColumn(
-                          label: Text(
-                            'id',
-                          ),
+                          label: Text('id'),
                         ),
-
                         DataColumn(
-                          label: Text(
-                            'left',
-                          ),
+                          label: Text('left'),
                         ),
-
                         DataColumn(
-                          label: Text(
-                            'right',
-                          ),
+                          label: Text('right'),
                         ),
-
                         DataColumn(
-                          label: Text(
-                            'base',
-                          ),
+                          label: Text('base'),
                         ),
-
                         DataColumn(
-                          label: Text(
-                            'radius',
-                          ),
+                          label: Text('radius'),
                         ),
                       ],
-
                       rows: logRows.map((row) {
                         return DataRow(
                           cells: [
                             DataCell(
-                              Text(
-                                '${row.id}',
-                              ),
+                              Text('${row.id}'),
                             ),
                             DataCell(
-                              Text(
-                                '${row.leftWheelSpeed}',
-                              ),
-                            ),
-
-                            DataCell(
-                              Text(
-                                '${row.rightWheelSpeed}',
-                              ),
-                            ),
-
-                            DataCell(
-                              Text(
-                                row.baseSize.toStringAsFixed(2),
-                              ),
+                              Text('${row.leftWheelSpeed}'),
                             ),
                             DataCell(
-                              Text(
-                                row.wheelRadius.toStringAsFixed(2),
-                              ),
+                              Text('${row.rightWheelSpeed}'),
+                            ),
+                            DataCell(
+                              Text(row.baseSize.toStringAsFixed(2)),
+                            ),
+                            DataCell(
+                              Text(row.wheelRadius.toStringAsFixed(2)),
                             ),
                           ],
                         );
@@ -1108,11 +1045,9 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                 ),
               ),
             ),
-
             const SizedBox(
               height: 6,
             ),
-
             Row(
               children: [
                 Expanded(
@@ -1127,11 +1062,9 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(
                   width: 6,
                 ),
-
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _resetSimulation,
@@ -1150,7 +1083,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lab 5 — WebSocket'),
+        title: const Text('Lab 4 — WebSocket'),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -1171,7 +1104,6 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
             onPressed: isConnecting
                 ? null
                 : _connectToServer,
-
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -1185,11 +1117,9 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                 flex: 4,
                 child: _buildControls(),
               ),
-
               const SizedBox(
                 height: 6,
               ),
-
               Expanded(
                 flex: 6,
                 child: Row(
@@ -1198,11 +1128,9 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                       flex: 3,
                       child: _buildSimulationPanel(),
                     ),
-
                     const SizedBox(
                       width: 6,
                     ),
-
                     Expanded(
                       flex: 2,
                       child: Column(
@@ -1213,10 +1141,8 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
                           ),
                           Expanded(
                             flex: 2,
-
                             child: _buildPhysicsPanel(),
                           ),
-
                           Expanded(
                             flex: 4,
                             child: _buildLogPanel(),
@@ -1264,6 +1190,7 @@ class RobotPainter extends CustomPainter {
         center.dx + trail.first.dx * scale,
         center.dy + trail.first.dy * scale,
       );
+
       path.moveTo(
         firstPoint.dx,
         firstPoint.dy,
@@ -1274,6 +1201,7 @@ class RobotPainter extends CustomPainter {
           center.dx + trail[i].dx * scale,
           center.dy + trail[i].dy * scale,
         );
+
         path.lineTo(
           point.dx,
           point.dy,
@@ -1287,14 +1215,17 @@ class RobotPainter extends CustomPainter {
       canvas.drawPath(path, trailPaint);
     }
 
-    final robotPosition =
-    Offset(
+    final robotPosition = Offset(
       center.dx + robotX * scale,
       center.dy + robotY * scale,
     );
 
     canvas.save();
-    canvas.translate(robotPosition.dx, robotPosition.dy);
+
+    canvas.translate(
+        robotPosition.dx,
+        robotPosition.dy
+    );
 
     canvas.rotate(robotAngle);
 
@@ -1346,12 +1277,10 @@ class RobotPainter extends CustomPainter {
         bodySize / 2,
         -bodySize / 4,
       ),
-
       const Offset(
         bodySize / 2,
         bodySize / 4,
       ),
-
       frontPaint,
     );
 
