@@ -83,7 +83,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
 
   double robotX = 0;
   double robotY = 0;
-
   double robotAngle = math.pi / 2;
 
   bool isRunning = false;
@@ -95,7 +94,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
   final List<TrofimenkoLogRow> logRows = [];
 
   final ScrollController logVerticalController = ScrollController();
-
   final ScrollController logHorizontalController = ScrollController();
 
   Future<void> saveQueue = Future<void>.value();
@@ -516,7 +514,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     if (angularSpeed.abs() < 0.000001) {
       return null;
     }
-
     return (linearSpeed / angularSpeed).abs();
   }
 
@@ -527,7 +524,6 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     if (turningRadius == null) {
       return 'inf';
     }
-
     return '${turningRadius!.toStringAsFixed(3)} м';
   }
 
@@ -535,14 +531,12 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
     if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
-
     if (leftWheelSpeed == rightWheelSpeed) {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
       return 'Назад';
     }
-
     if (angularSpeed > 0) {
       return 'Поворот влево';
     }
@@ -1158,7 +1152,6 @@ class RobotPainter extends CustomPainter {
         ..color = Colors.blue
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
-
       canvas.drawPath(path, trailPaint);
     }
 
