@@ -305,9 +305,7 @@ class _WheelControllerPageState extends State<WheelControllerPage> {
       }
 
       if (type == 'error') {
-        debugPrint(
-          'Server error: '
-              '${message['message']}',
+        debugPrint('Server error: ${message['message']}',
         );
       }
     } catch (error) {
