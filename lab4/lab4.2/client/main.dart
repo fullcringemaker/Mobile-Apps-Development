@@ -389,8 +389,7 @@ class _WheelControllerPageState  extends State<WheelControllerPage> {
         );
   }
 
-  Future<void>
-  _saveValues() async {
+  Future<void> _saveValues() async {
 
     final socket = webSocket;
 
