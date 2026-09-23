@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Lab 4 WebSocket',
+      title: 'Lab 5 WebSocket',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
@@ -71,19 +71,15 @@ class WheelControllerPage extends StatefulWidget {
 
 class _WheelControllerPageState
     extends State<WheelControllerPage> {
-  static const String serverIp =
-      '172.17.247.107';
-
+  static const String serverIp = '172.17.247.107';
   static const int serverPort = 8080;
 
   WebSocket? webSocket;
 
-  StreamSubscription<dynamic>?
-  webSocketSubscription;
+  StreamSubscription<dynamic>? webSocketSubscription;
 
   bool isConnected = false;
   bool isConnecting = false;
-
   bool isServerErrorDialogShown = false;
 
   int leftWheelSpeed = 0;
@@ -104,16 +100,13 @@ class _WheelControllerPageState
 
   final List<TrofimenkoLogRow> logRows = [];
 
-  final ScrollController
-  logVerticalController =
+  final ScrollController logVerticalController =
   ScrollController();
 
-  final ScrollController
-  logHorizontalController =
+  final ScrollController logHorizontalController =
   ScrollController();
 
-  Future<void> saveQueue =
-  Future<void>.value();
+  Future<void> saveQueue = Future<void>.value();
 
   final List<Offset> trail = [
     Offset.zero,
@@ -140,13 +133,12 @@ class _WheelControllerPageState
     super.dispose();
   }
 
-  // ---------------------------------------------------------
-  // СООБЩЕНИЕ ОБ ОТКЛЮЧЕНИИ СЕРВЕРА
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
+  // WEBSOCKET
+  // ------------------------------------------------------------
 
   void _showServerDisconnectedDialog() {
-    if (!mounted ||
-        isServerErrorDialogShown) {
+    if (!mounted || isServerErrorDialogShown) {
       return;
     }
 
@@ -161,17 +153,17 @@ class _WheelControllerPageState
             'Ошибка соединения',
           ),
           content: const Text(
-            'Соединение с сервером потеряно.',
+            'Соединение с сервером потеряно.\n\n'
+                'Проверьте, что сервер на компьютере '
+                'запущен и компьютер находится '
+                'в той же Wi-Fi сети.',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
 
-                isServerErrorDialogShown =
-                false;
+                isServerErrorDialogShown = false;
               },
               child: const Text(
                 'Закрыть',
@@ -179,12 +171,9 @@ class _WheelControllerPageState
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
 
-                isServerErrorDialogShown =
-                false;
+                isServerErrorDialogShown = false;
 
                 _connectToServer();
               },
@@ -197,15 +186,10 @@ class _WheelControllerPageState
       },
     ).then(
           (_) {
-        isServerErrorDialogShown =
-        false;
+        isServerErrorDialogShown = false;
       },
     );
   }
-
-  // ---------------------------------------------------------
-  // WEBSOCKET
-  // ---------------------------------------------------------
 
   Future<void> _connectToServer() async {
     if (isConnecting) {
@@ -448,8 +432,7 @@ class _WheelControllerPageState
 
       if (type == 'error') {
         debugPrint(
-          'Server error: '
-              '${message['message']}',
+          'Server error: ${message['message']}',
         );
       }
     } catch (error) {
@@ -501,9 +484,9 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
   // МАШИНА ВРЕМЕНИ
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
 
   void _restoreLogRow(
       TrofimenkoLogRow row,
@@ -552,15 +535,13 @@ class _WheelControllerPageState
               setDialogState,
               ) {
             final row =
-            logRows[
-            selectedIndex];
+            logRows[selectedIndex];
 
             return AlertDialog(
               title: const Text(
                 'Машина времени',
               ),
-              content: SizedBox(
-                width: 500,
+              content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize:
                   MainAxisSize.min,
@@ -617,8 +598,7 @@ class _WheelControllerPageState
                             divisions:
                             logRows.length >
                                 1
-                                ? logRows
-                                .length -
+                                ? logRows.length -
                                 1
                                 : 1,
                             onChanged:
@@ -726,7 +706,7 @@ class _WheelControllerPageState
     return Padding(
       padding:
       const EdgeInsets.symmetric(
-        vertical: 4,
+        vertical: 5,
       ),
       child: Row(
         children: [
@@ -734,6 +714,9 @@ class _WheelControllerPageState
             child: Text(
               name,
             ),
+          ),
+          const SizedBox(
+            width: 10,
           ),
           Text(
             value,
@@ -748,9 +731,9 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // РАСЧЁТЫ ДВИЖЕНИЯ
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
+  // РАСЧЁТЫ
+  // ------------------------------------------------------------
 
   double get leftLinearSpeed {
     return leftWheelSpeed *
@@ -820,9 +803,9 @@ class _WheelControllerPageState
     return 'Поворот вправо';
   }
 
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
   // СИМУЛЯЦИЯ
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
 
   void _startSimulation() {
     if (isRunning) {
@@ -920,61 +903,9 @@ class _WheelControllerPageState
     });
   }
 
-  // ---------------------------------------------------------
-  // ПАНЕЛЬ ПОДКЛЮЧЕНИЯ
-  // ---------------------------------------------------------
-
-  Widget _buildConnectionPanel() {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding:
-        const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 6,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                isConnecting
-                    ? 'Подключение...'
-                    : isConnected
-                    ? 'WS: подключено'
-                    : 'WS: нет связи',
-                maxLines: 1,
-                overflow:
-                TextOverflow.ellipsis,
-                style:
-                const TextStyle(
-                  fontSize: 15,
-                  fontWeight:
-                  FontWeight.bold,
-                ),
-              ),
-            ),
-
-            IconButton(
-              tooltip:
-              'Переподключиться',
-              onPressed:
-              isConnecting
-                  ? null
-                  : _connectToServer,
-              icon:
-              const Icon(
-                Icons.refresh,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------
-  // ПОЛЗУНОК СКОРОСТИ КОЛЕСА
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
+  // ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+  // ------------------------------------------------------------
 
   Widget _buildWheelSlider({
     required String title,
@@ -989,10 +920,10 @@ class _WheelControllerPageState
       child: Padding(
         padding:
         const EdgeInsets.fromLTRB(
+          16,
           14,
-          14,
-          14,
-          10,
+          16,
+          12,
         ),
         child: Column(
           mainAxisSize:
@@ -1014,12 +945,11 @@ class _WheelControllerPageState
             ),
 
             const SizedBox(
-              height: 8,
+              height: 6,
             ),
 
             Text(
               '$value рад/с',
-              maxLines: 1,
               style:
               const TextStyle(
                 fontSize: 22,
@@ -1038,14 +968,15 @@ class _WheelControllerPageState
               min: -10,
               max: 10,
               divisions: 20,
-              onChanged: (value) {
+              onChanged: (newValue) {
                 onChanged(
-                  value.toInt(),
+                  newValue.toInt(),
                 );
               },
-              onChangeEnd: (value) {
+              onChangeEnd:
+                  (newValue) {
                 onChangeEnd(
-                  value.toInt(),
+                  newValue.toInt(),
                 );
               },
             ),
@@ -1053,7 +984,7 @@ class _WheelControllerPageState
             const Padding(
               padding:
               EdgeInsets.symmetric(
-                horizontal: 10,
+                horizontal: 8,
               ),
               child: Row(
                 mainAxisAlignment:
@@ -1072,10 +1003,6 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // ПОЛЗУНОК РАЗМЕРА
-  // ---------------------------------------------------------
-
   Widget _buildSizeSlider({
     required String title,
     required double value,
@@ -1093,10 +1020,10 @@ class _WheelControllerPageState
       child: Padding(
         padding:
         const EdgeInsets.fromLTRB(
+          16,
           14,
-          14,
-          14,
-          10,
+          16,
+          12,
         ),
         child: Column(
           mainAxisSize:
@@ -1118,12 +1045,11 @@ class _WheelControllerPageState
             ),
 
             const SizedBox(
-              height: 8,
+              height: 6,
             ),
 
             Text(
               '${value.toStringAsFixed(digits)} м',
-              maxLines: 1,
               style:
               const TextStyle(
                 fontSize: 22,
@@ -1148,9 +1074,8 @@ class _WheelControllerPageState
 
             Padding(
               padding:
-              const EdgeInsets
-                  .symmetric(
-                horizontal: 10,
+              const EdgeInsets.symmetric(
+                horizontal: 8,
               ),
               child: Row(
                 mainAxisAlignment:
@@ -1176,209 +1101,59 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // ЧЕТЫРЕ ПАНЕЛИ УПРАВЛЕНИЯ
-  // ---------------------------------------------------------
-
-  Widget _buildControls() {
-    return Column(
-      children: [
-        _buildWheelSlider(
-          title:
-          'Скорость левого колеса',
-          value:
-          leftWheelSpeed,
-          onChanged: (value) {
-            setState(() {
-              leftWheelSpeed =
-                  value;
-            });
-          },
-          onChangeEnd: (value) {
-            _scheduleSaveValues();
-          },
-        ),
-
-        const SizedBox(
-          height: 8,
-        ),
-
-        _buildWheelSlider(
-          title:
-          'Скорость правого колеса',
-          value:
-          rightWheelSpeed,
-          onChanged: (value) {
-            setState(() {
-              rightWheelSpeed =
-                  value;
-            });
-          },
-          onChangeEnd: (value) {
-            _scheduleSaveValues();
-          },
-        ),
-
-        const SizedBox(
-          height: 8,
-        ),
-
-        _buildSizeSlider(
-          title:
-          'Размер базы',
-          value:
-          baseSize,
-          min: 0.1,
-          max: 1.0,
-          divisions: 90,
-          digits: 2,
-          onChanged: (value) {
-            setState(() {
-              baseSize = value;
-            });
-          },
-          onChangeEnd: (value) {
-            _scheduleSaveValues();
-          },
-        ),
-
-        const SizedBox(
-          height: 8,
-        ),
-
-        _buildSizeSlider(
-          title:
-          'Радиус колеса',
-          value:
-          wheelRadius,
-          min: 0.01,
-          max: 0.2,
-          divisions: 19,
-          digits: 2,
-          onChanged: (value) {
-            setState(() {
-              wheelRadius =
-                  value;
-            });
-          },
-          onChangeEnd: (value) {
-            _scheduleSaveValues();
-          },
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------
-  // СИМУЛЯЦИЯ
-  // ---------------------------------------------------------
-
-  Widget _buildSimulationPanel() {
+  Widget _buildStatusPanel() {
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding:
-        const EdgeInsets.all(
-          10,
-        ),
-        child: Column(
-          mainAxisSize:
-          MainAxisSize.min,
-          children: [
-            AspectRatio(
-              aspectRatio: 1.0,
-              child: Container(
-                width:
-                double.infinity,
-                clipBehavior:
-                Clip.hardEdge,
-                decoration:
-                BoxDecoration(
-                  border:
-                  Border.all(
-                    color:
-                    Colors.grey,
-                  ),
-                  borderRadius:
-                  BorderRadius
-                      .circular(
-                    10,
-                  ),
-                ),
-                child:
-                CustomPaint(
-                  painter:
-                  RobotPainter(
-                    robotX:
-                    robotX,
-                    robotY:
-                    robotY,
-                    robotAngle:
-                    robotAngle,
-                    trail:
-                    trail,
-                  ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Padding(
+          padding:
+          const EdgeInsets.all(
+            16,
+          ),
+          child: Column(
+            mainAxisSize:
+            MainAxisSize.min,
+            children: [
+              const Text(
+                'Статус движения',
+                maxLines: 1,
+                textAlign:
+                TextAlign.center,
+                style:
+                TextStyle(
+                  fontSize: 16,
+                  fontWeight:
+                  FontWeight.bold,
                 ),
               ),
-            ),
 
-            const SizedBox(
-              height: 10,
-            ),
+              const SizedBox(
+                height: 8,
+              ),
 
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child:
-                    FilledButton(
-                      onPressed:
-                      isRunning
-                          ? _stopSimulation
-                          : _startSimulation,
-                      child: Text(
-                        isRunning
-                            ? 'Стоп'
-                            : 'Старт',
-                        maxLines: 1,
-                      ),
-                    ),
-                  ),
+              Text(
+                movementStatus,
+                maxLines: 1,
+                overflow:
+                TextOverflow.ellipsis,
+                textAlign:
+                TextAlign.center,
+                style:
+                const TextStyle(
+                  fontSize: 22,
+                  fontWeight:
+                  FontWeight.bold,
                 ),
-
-                const SizedBox(
-                  width: 10,
-                ),
-
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child:
-                    OutlinedButton(
-                      onPressed:
-                      _resetSimulation,
-                      child:
-                      const Text(
-                        'Сбросить',
-                        maxLines: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ---------------------------------------------------------
-  // СТАТУС ДВИЖЕНИЯ
-  // ---------------------------------------------------------
-
-  Widget _buildStatusPanel() {
+  Widget _buildPhysicsPanel() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -1389,41 +1164,39 @@ class _WheelControllerPageState
         child: Column(
           mainAxisSize:
           MainAxisSize.min,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Статус движения',
-              maxLines: 1,
-              textAlign:
-              TextAlign.center,
-              style:
-              TextStyle(
-                fontSize: 16,
-                fontWeight:
-                FontWeight.bold,
+            const Center(
+              child: Text(
+                'Параметры движения',
+                maxLines: 1,
+                style:
+                TextStyle(
+                  fontSize: 16,
+                  fontWeight:
+                  FontWeight.bold,
+                ),
               ),
             ),
 
             const SizedBox(
-              height: 8,
+              height: 12,
             ),
 
-            SizedBox(
-              width:
-              double.infinity,
-              child: FittedBox(
-                fit:
-                BoxFit.scaleDown,
-                child: Text(
-                  movementStatus,
-                  maxLines: 1,
-                  style:
-                  const TextStyle(
-                    fontSize: 22,
-                    fontWeight:
-                    FontWeight.bold,
-                  ),
-                ),
-              ),
+            _buildPhysicsRow(
+              'Линейная скорость',
+              '${linearSpeed.toStringAsFixed(3)} м/с',
+            ),
+
+            _buildPhysicsRow(
+              'Угловая скорость',
+              '${angularSpeed.abs().toStringAsFixed(3)} рад/с',
+            ),
+
+            _buildPhysicsRow(
+              'Радиус траектории',
+              turningRadiusText,
             ),
           ],
         ),
@@ -1431,12 +1204,8 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // ПАРАМЕТРЫ ДВИЖЕНИЯ
-  // ---------------------------------------------------------
-
   Widget _buildPhysicsRow(
-      String name,
+      String title,
       String value,
       ) {
     return Padding(
@@ -1448,7 +1217,7 @@ class _WheelControllerPageState
         children: [
           Expanded(
             child: Text(
-              name,
+              title,
               maxLines: 1,
               overflow:
               TextOverflow.ellipsis,
@@ -1478,23 +1247,20 @@ class _WheelControllerPageState
     );
   }
 
-  Widget _buildPhysicsPanel() {
+  Widget _buildSimulationPanel() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding:
         const EdgeInsets.all(
-          16,
+          12,
         ),
         child: Column(
           mainAxisSize:
           MainAxisSize.min,
           children: [
             const Text(
-              'Параметры движения',
-              maxLines: 1,
-              textAlign:
-              TextAlign.center,
+              'Симуляция',
               style:
               TextStyle(
                 fontSize: 16,
@@ -1504,22 +1270,90 @@ class _WheelControllerPageState
             ),
 
             const SizedBox(
-              height: 8,
+              height: 10,
             ),
 
-            _buildPhysicsRow(
-              'Линейная скорость',
-              '${linearSpeed.toStringAsFixed(3)} м/с',
+            SizedBox(
+              height: 300,
+              width: double.infinity,
+              child: Container(
+                clipBehavior:
+                Clip.hardEdge,
+                decoration:
+                BoxDecoration(
+                  border:
+                  Border.all(
+                    color:
+                    Colors.grey,
+                  ),
+                  borderRadius:
+                  BorderRadius.circular(
+                    10,
+                  ),
+                ),
+                child:
+                CustomPaint(
+                  painter:
+                  RobotPainter(
+                    robotX:
+                    robotX,
+                    robotY:
+                    robotY,
+                    robotAngle:
+                    robotAngle,
+                    trail: trail,
+                  ),
+                ),
+              ),
             ),
 
-            _buildPhysicsRow(
-              'Угловая скорость',
-              '${angularSpeed.abs().toStringAsFixed(3)} рад/с',
+            const SizedBox(
+              height: 12,
             ),
 
-            _buildPhysicsRow(
-              'Радиус траектории',
-              turningRadiusText,
+            Row(
+              children: [
+                Expanded(
+                  child:
+                  SizedBox(
+                    height: 45,
+                    child:
+                    FilledButton(
+                      onPressed:
+                      isRunning
+                          ? _stopSimulation
+                          : _startSimulation,
+                      child: Text(
+                        isRunning
+                            ? 'Стоп'
+                            : 'Старт',
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(
+                  width: 10,
+                ),
+
+                Expanded(
+                  child:
+                  SizedBox(
+                    height: 45,
+                    child:
+                    OutlinedButton(
+                      onPressed:
+                      _resetSimulation,
+                      child:
+                      const Text(
+                        'Сбросить',
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1527,19 +1361,17 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // ЖУРНАЛ
-  // ---------------------------------------------------------
-
   Widget _buildLogPanel() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding:
         const EdgeInsets.all(
-          10,
+          12,
         ),
         child: Column(
+          mainAxisSize:
+          MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -1547,8 +1379,9 @@ class _WheelControllerPageState
                   child: Text(
                     'Журнал записей',
                     maxLines: 1,
-                    textAlign:
-                    TextAlign.center,
+                    overflow:
+                    TextOverflow
+                        .ellipsis,
                     style:
                     TextStyle(
                       fontSize: 16,
@@ -1574,17 +1407,15 @@ class _WheelControllerPageState
             ),
 
             const SizedBox(
-              height: 4,
+              height: 5,
             ),
 
             SizedBox(
               height: 300,
-              child:
-              logRows.isEmpty
+              child: logRows.isEmpty
                   ? const Center(
                 child: Text(
                   'Записей пока нет',
-                  maxLines: 1,
                 ),
               )
                   : Scrollbar(
@@ -1604,13 +1435,6 @@ class _WheelControllerPageState
                     logHorizontalController,
                     thumbVisibility:
                     true,
-                    notificationPredicate:
-                        (notification) {
-                      return notification
-                          .metrics
-                          .axis ==
-                          Axis.horizontal;
-                    },
                     child:
                     SingleChildScrollView(
                       controller:
@@ -1620,55 +1444,45 @@ class _WheelControllerPageState
                       child:
                       DataTable(
                         headingRowHeight:
-                        40,
+                        42,
                         dataRowMinHeight:
                         40,
                         dataRowMaxHeight:
                         40,
                         horizontalMargin:
-                        12,
+                        14,
                         columnSpacing:
-                        25,
+                        24,
                         columns:
                         const [
                           DataColumn(
                             label:
                             Text(
                               'id',
-                              maxLines:
-                              1,
                             ),
                           ),
                           DataColumn(
                             label:
                             Text(
                               'left',
-                              maxLines:
-                              1,
                             ),
                           ),
                           DataColumn(
                             label:
                             Text(
                               'right',
-                              maxLines:
-                              1,
                             ),
                           ),
                           DataColumn(
                             label:
                             Text(
                               'base',
-                              maxLines:
-                              1,
                             ),
                           ),
                           DataColumn(
                             label:
                             Text(
                               'radius',
-                              maxLines:
-                              1,
                             ),
                           ),
                         ],
@@ -1725,9 +1539,9 @@ class _WheelControllerPageState
     );
   }
 
-  // ---------------------------------------------------------
-  // ОСНОВНОЙ ЭКРАН
-  // ---------------------------------------------------------
+  // ------------------------------------------------------------
+  // ГЛАВНЫЙ ЭКРАН
+  // ------------------------------------------------------------
 
   @override
   Widget build(
@@ -1736,11 +1550,45 @@ class _WheelControllerPageState
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Lab 4 — WebSocket',
+          'Lab 5',
           maxLines: 1,
-          overflow:
-          TextOverflow.ellipsis,
         ),
+
+        actions: [
+          Center(
+            child: Padding(
+              padding:
+              const EdgeInsets.only(
+                right: 4,
+              ),
+              child: Text(
+                isConnecting
+                    ? 'Подключение...'
+                    : isConnected
+                    ? 'WS: подключено'
+                    : 'WS: нет связи',
+                maxLines: 1,
+                style:
+                const TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+
+          IconButton(
+            tooltip:
+            'Переподключиться',
+            onPressed:
+            isConnecting
+                ? null
+                : _connectToServer,
+            icon:
+            const Icon(
+              Icons.refresh,
+            ),
+          ),
+        ],
       ),
 
       body: SafeArea(
@@ -1748,20 +1596,96 @@ class _WheelControllerPageState
         SingleChildScrollView(
           padding:
           const EdgeInsets.all(
-            10,
+            12,
           ),
+
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .stretch,
             children: [
-              _buildConnectionPanel(),
+              _buildWheelSlider(
+                title:
+                'Скорость левого колеса',
+                value:
+                leftWheelSpeed,
+                onChanged: (value) {
+                  setState(() {
+                    leftWheelSpeed =
+                        value;
+                  });
+                },
+                onChangeEnd:
+                    (value) {
+                  _scheduleSaveValues();
+                },
+              ),
 
               const SizedBox(
                 height: 10,
               ),
 
-              _buildControls(),
+              _buildWheelSlider(
+                title:
+                'Скорость правого колеса',
+                value:
+                rightWheelSpeed,
+                onChanged: (value) {
+                  setState(() {
+                    rightWheelSpeed =
+                        value;
+                  });
+                },
+                onChangeEnd:
+                    (value) {
+                  _scheduleSaveValues();
+                },
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+
+              _buildSizeSlider(
+                title:
+                'Размер базы',
+                value: baseSize,
+                min: 0.1,
+                max: 1.0,
+                divisions: 90,
+                digits: 2,
+                onChanged: (value) {
+                  setState(() {
+                    baseSize = value;
+                  });
+                },
+                onChangeEnd:
+                    (value) {
+                  _scheduleSaveValues();
+                },
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+
+              _buildSizeSlider(
+                title:
+                'Радиус колеса',
+                value:
+                wheelRadius,
+                min: 0.01,
+                max: 0.2,
+                divisions: 19,
+                digits: 2,
+                onChanged: (value) {
+                  setState(() {
+                    wheelRadius =
+                        value;
+                  });
+                },
+                onChangeEnd:
+                    (value) {
+                  _scheduleSaveValues();
+                },
+              ),
 
               const SizedBox(
                 height: 10,
@@ -1788,7 +1712,7 @@ class _WheelControllerPageState
               _buildLogPanel(),
 
               const SizedBox(
-                height: 10,
+                height: 12,
               ),
             ],
           ),
@@ -1798,14 +1722,16 @@ class _WheelControllerPageState
   }
 }
 
-// ---------------------------------------------------------
+// ------------------------------------------------------------
 // ОТРИСОВКА РОБОТА
-// ---------------------------------------------------------
+// ------------------------------------------------------------
 
-class RobotPainter extends CustomPainter {
+class RobotPainter
+    extends CustomPainter {
   final double robotX;
   final double robotY;
   final double robotAngle;
+
   final List<Offset> trail;
 
   static const double scale = 55;
@@ -1845,9 +1771,11 @@ class RobotPainter extends CustomPainter {
         firstPoint.dy,
       );
 
-      for (int i = 1;
+      for (
+      int i = 1;
       i < trail.length;
-      i++) {
+      i++
+      ) {
         final point = Offset(
           center.dx +
               trail[i].dx *
@@ -1877,7 +1805,8 @@ class RobotPainter extends CustomPainter {
       );
     }
 
-    final robotPosition = Offset(
+    final robotPosition =
+    Offset(
       center.dx +
           robotX * scale,
       center.dy +
@@ -1922,7 +1851,8 @@ class RobotPainter extends CustomPainter {
 
     final rightWheel =
     Rect.fromCenter(
-      center: const Offset(
+      center:
+      const Offset(
         0,
         bodySize / 2 + 5,
       ),
@@ -1932,7 +1862,8 @@ class RobotPainter extends CustomPainter {
 
     final leftWheel =
     Rect.fromCenter(
-      center: const Offset(
+      center:
+      const Offset(
         0,
         -bodySize / 2 - 5,
       ),
@@ -1955,7 +1886,7 @@ class RobotPainter extends CustomPainter {
       wheelPaint,
     );
 
-    final frontPaint =
+    final frontLinePaint =
     Paint()
       ..color =
           Colors.white
@@ -1970,7 +1901,7 @@ class RobotPainter extends CustomPainter {
         bodySize / 2,
         bodySize / 4,
       ),
-      frontPaint,
+      frontLinePaint,
     );
 
     canvas.restore();
