@@ -150,39 +150,57 @@ class _WheelControllerPageState
             'Ошибка соединения',
           ),
 
-          content: const Text(
-            'Соединение с сервером потеряно.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment:
+            CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Соединение с сервером потеряно.',
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(
+                      dialogContext,
+                    ).pop();
+
+                    isServerErrorDialogShown = false;
+
+                    _connectToServer();
+                  },
+                  child: const Text(
+                    'Переподключиться',
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 6,
+              ),
+
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(
+                      dialogContext,
+                    ).pop();
+
+                    isServerErrorDialogShown = false;
+                  },
+                  child: const Text(
+                    'Закрыть',
+                  ),
+                ),
+              ),
+            ],
           ),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-
-                isServerErrorDialogShown = false;
-              },
-              child: const Text(
-                'Закрыть',
-              ),
-            ),
-
-            FilledButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-
-                isServerErrorDialogShown = false;
-
-                _connectToServer();
-              },
-              child: const Text(
-                'Переподключиться',
-              ),
-            ),
-          ],
         );
       },
     ).then((_) {
