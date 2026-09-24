@@ -31,10 +31,8 @@ class BottlePage extends StatefulWidget {
   State<BottlePage> createState() => _BottlePageState();
 }
 
-class _BottlePageState extends State<BottlePage>
-    with SingleTickerProviderStateMixin {
+class _BottlePageState extends State<BottlePage> with SingleTickerProviderStateMixin {
   late AnimationController controller;
-
   int h = 210;
   int d = 120;
   int k = 60;
@@ -76,11 +74,9 @@ class _BottlePageState extends State<BottlePage>
       if (newH != null) {
         h = newH;
       }
-
       if (newD != null) {
         d = newD;
       }
-
       if (newK != null) {
         k = newK;
       }
@@ -178,9 +174,9 @@ class _BottlePageState extends State<BottlePage>
                   },
                 ),
               ),
-
-              const SizedBox(height: 15),
-
+              const SizedBox(
+                  height: 15
+              ),
               parameterSlider(
                 name: 'Высота h',
                 value: h,
@@ -191,7 +187,6 @@ class _BottlePageState extends State<BottlePage>
                   changeParameters(newH: value);
                 },
               ),
-
               parameterSlider(
                 name: 'Диаметр d',
                 value: d,
@@ -202,7 +197,6 @@ class _BottlePageState extends State<BottlePage>
                   changeParameters(newD: value);
                 },
               ),
-
               parameterSlider(
                 name: 'Заполнение k, %',
                 value: k,
@@ -213,9 +207,9 @@ class _BottlePageState extends State<BottlePage>
                   changeParameters(newK: value);
                 },
               ),
-
-              const SizedBox(height: 10),
-
+              const SizedBox(
+                  height: 10
+              ),
               Text(
                 'Горлышко: высота ${h ~/ 3}, диаметр ${d ~/ 3}',
                 style: const TextStyle(
@@ -244,16 +238,13 @@ class BottlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
-
     final top = (size.height - h) / 2;
     final bottom = top + h;
-
     final left = centerX - d / 2;
     final right = centerX + d / 2;
 
     final neckHeight = h / 3;
     final neckWidth = d / 3;
-
     final neckLeft = centerX - neckWidth / 2;
     final neckRight = centerX + neckWidth / 2;
 
@@ -265,9 +256,15 @@ class BottlePainter extends CustomPainter {
 
     final bottlePath = Path();
 
-    bottlePath.moveTo(neckLeft, top);
-
-    bottlePath.lineTo(neckRight, top);
+    bottlePath.moveTo(
+        neckLeft, 
+        top
+    );
+    
+    bottlePath.lineTo(
+        neckRight, 
+        top
+    );
 
     bottlePath.lineTo(
       neckRight,
@@ -308,9 +305,8 @@ class BottlePainter extends CustomPainter {
     );
 
     bottlePath.lineTo(
-      left,
-      shoulderEnd,
-    );
+        left, 
+        shoulderEnd);
 
     bottlePath.cubicTo(
       left,
@@ -326,10 +322,7 @@ class BottlePainter extends CustomPainter {
     final backgroundPaint = Paint()
       ..color = Colors.white;
 
-    canvas.drawPath(
-      bottlePath,
-      backgroundPaint,
-    );
+    canvas.drawPath(bottlePath, backgroundPaint);
 
     if (k > 0) {
       final liquidTop = bottom - h * (k / 100);
@@ -341,11 +334,10 @@ class BottlePainter extends CustomPainter {
 
       canvas.clipPath(bottlePath);
 
-      canvas.drawRect(
-        Rect.fromLTRB(
-          left,
-          liquidTop,
-          right,
+      canvas.drawRect(Rect.fromLTRB(
+          left, 
+          liquidTop, 
+          right, 
           bottom,
         ),
         liquidPaint,
@@ -370,10 +362,7 @@ class BottlePainter extends CustomPainter {
       ..strokeWidth = 3
       ..strokeJoin = StrokeJoin.round;
 
-    canvas.drawPath(
-      bottlePath,
-      outlinePaint,
-    );
+    canvas.drawPath(bottlePath, outlinePaint);
   }
 
   @override
