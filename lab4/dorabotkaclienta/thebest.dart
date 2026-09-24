@@ -43,19 +43,13 @@ class TrofimenkoLogRow {
     required this.wheelRadius,
   });
 
-  factory TrofimenkoLogRow.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory TrofimenkoLogRow.fromJson(Map<String, dynamic> json) {
     return TrofimenkoLogRow(
       id: (json['id'] as num).toInt(),
-      leftWheelSpeed:
-      (json['leftWheelSpeed'] as num).toInt(),
-      rightWheelSpeed:
-      (json['rightWheelSpeed'] as num).toInt(),
-      baseSize:
-      (json['baseSize'] as num).toDouble(),
-      wheelRadius:
-      (json['wheelRadius'] as num).toDouble(),
+      leftWheelSpeed: (json['leftWheelSpeed'] as num).toInt(),
+      rightWheelSpeed: (json['rightWheelSpeed'] as num).toInt(),
+      baseSize: (json['baseSize'] as num).toDouble(),
+      wheelRadius: (json['wheelRadius'] as num).toDouble(),
     );
   }
 }
@@ -69,8 +63,7 @@ class WheelControllerPage extends StatefulWidget {
   }
 }
 
-class _WheelControllerPageState
-    extends State<WheelControllerPage> {
+class _WheelControllerPageState extends State<WheelControllerPage> {
   static const String serverIp = '172.17.55.24';
   static const int serverPort = 8080;
 
@@ -99,11 +92,8 @@ class _WheelControllerPageState
 
   final List<TrofimenkoLogRow> logRows = [];
 
-  final ScrollController logVerticalController =
-  ScrollController();
-
-  final ScrollController logHorizontalController =
-  ScrollController();
+  final ScrollController logVerticalController = ScrollController();
+  final ScrollController logHorizontalController = ScrollController();
 
   Future<void> saveQueue = Future<void>.value();
 
@@ -111,8 +101,7 @@ class _WheelControllerPageState
     Offset.zero,
   ];
 
-  String get serverAddress =>
-      'ws://$serverIp:$serverPort/ws';
+  String get serverAddress => 'ws://$serverIp:$serverPort/ws';
 
   @override
   void initState() {
@@ -130,67 +119,43 @@ class _WheelControllerPageState
     super.dispose();
   }
 
-  // ------------------------------------------------------------
-  // WEBSOCKET
-  // ------------------------------------------------------------
-
   void _showServerDisconnectedDialog() {
     if (!mounted || isServerErrorDialogShown) {
       return;
     }
-
     isServerErrorDialogShown = true;
-
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Ошибка соединения',
-          ),
-
+          title: const Text('Ошибка соединения',),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-            CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Соединение с сервером потеряно.',
-              ),
-
+              const Text('Соединение с сервером потеряно.'),
               const SizedBox(
                 height: 20,
               ),
-
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    Navigator.of(
-                      dialogContext,
-                    ).pop();
-
+                    Navigator.of(dialogContext).pop();
                     isServerErrorDialogShown = false;
-
                     _connectToServer();
                   },
-                  child: const Text(
-                    'Переподключиться',
-                  ),
+                  child: const Text('Переподключиться'),
                 ),
               ),
-
               const SizedBox(
                 height: 6,
               ),
-
               Center(
                 child: TextButton(
                   onPressed: () {
-                    Navigator.of(
-                      dialogContext,
-                    ).pop();
+                    Navigator.of(dialogContext).pop();
 
                     isServerErrorDialogShown = false;
                   },
@@ -288,20 +253,15 @@ class _WheelControllerPageState
     }
   }
 
-  void _handleServerMessage(
-      dynamic rawMessage,
-      ) {
+  void _handleServerMessage(dynamic rawMessage) {
     try {
-      final decoded = jsonDecode(
-        rawMessage.toString(),
-      );
+      final decoded = jsonDecode(rawMessage.toString());
 
       if (decoded is! Map) {
         return;
       }
 
-      final message =
-      Map<String, dynamic>.from(decoded);
+      final message = Map<String, dynamic>.from(decoded);
 
       final type = message['type'];
 
@@ -312,8 +272,7 @@ class _WheelControllerPageState
           return;
         }
 
-        final loadedRows =
-        <TrofimenkoLogRow>[];
+        final loadedRows = <TrofimenkoLogRow>[];
 
         for (final item in rawRows) {
           if (item is Map) {
@@ -338,14 +297,8 @@ class _WheelControllerPageState
 
             leftWheelSpeed = last.leftWheelSpeed;
             rightWheelSpeed = last.rightWheelSpeed;
-
-            baseSize = last.baseSize
-                .clamp(0.1, 1.0)
-                .toDouble();
-
-            wheelRadius = last.wheelRadius
-                .clamp(0.01, 0.2)
-                .toDouble();
+            baseSize = last.baseSize.clamp(0.1, 1.0).toDouble();
+            wheelRadius = last.wheelRadius.clamp(0.01, 0.2).toDouble();
           }
         });
 
@@ -359,8 +312,7 @@ class _WheelControllerPageState
           return;
         }
 
-        final row =
-        TrofimenkoLogRow.fromJson(
+        final row = TrofimenkoLogRow.fromJson(
           Map<String, dynamic>.from(rawRow),
         );
 
@@ -416,21 +368,12 @@ class _WheelControllerPageState
     );
   }
 
-  // ------------------------------------------------------------
-  // МАШИНА ВРЕМЕНИ
-  // ------------------------------------------------------------
-
-  void _restoreLogRow(
-      TrofimenkoLogRow row,
-      ) {
+  void _restoreLogRow(TrofimenkoLogRow row) {
     setState(() {
       leftWheelSpeed = row.leftWheelSpeed;
       rightWheelSpeed = row.rightWheelSpeed;
-      baseSize =
-          row.baseSize.clamp(0.1, 1.0).toDouble();
-      wheelRadius = row.wheelRadius
-          .clamp(0.01, 0.2)
-          .toDouble();
+      baseSize = row.baseSize.clamp(0.1, 1.0).toDouble();
+      wheelRadius = row.wheelRadius.clamp(0.01, 0.2).toDouble();
     });
 
     _scheduleSaveValues();
@@ -447,20 +390,13 @@ class _WheelControllerPageState
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (
-              context,
-              setDialogState,
-              ) {
+          builder: (context, setDialogState) {
             final row = logRows[selectedIndex];
-
             return AlertDialog(
-              title: const Text(
-                'Машина времени',
-              ),
+              title: const Text('Машина времени'),
               content: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize:
-                  MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Запись ${selectedIndex + 1} из ${logRows.length}',
@@ -468,21 +404,20 @@ class _WheelControllerPageState
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(
+                        height: 10
+                    ),
                     Row(
                       children: [
                         IconButton(
-                          onPressed:
-                          selectedIndex > 0
+                          onPressed: selectedIndex > 0
                               ? () {
                             setDialogState(() {
                               selectedIndex--;
                             });
                           }
                               : null,
-                          icon: const Icon(
-                            Icons.chevron_left,
-                          ),
+                          icon: const Icon(Icons.chevron_left),
                         ),
                         Expanded(
                           child: Slider(
@@ -504,17 +439,14 @@ class _WheelControllerPageState
                           ),
                         ),
                         IconButton(
-                          onPressed:
-                          selectedIndex < logRows.length - 1
+                          onPressed: selectedIndex < logRows.length - 1
                               ? () {
                             setDialogState(() {
                               selectedIndex++;
                             });
                           }
                               : null,
-                          icon: const Icon(
-                            Icons.chevron_right,
-                          ),
+                          icon: const Icon(Icons.chevron_right),
                         ),
                       ],
                     ),
@@ -543,18 +475,14 @@ class _WheelControllerPageState
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                   },
-                  child: const Text(
-                    'Закрыть',
-                  ),
+                  child: const Text('Закрыть'),
                 ),
                 FilledButton(
                   onPressed: () {
                     _restoreLogRow(row);
                     Navigator.of(dialogContext).pop();
                   },
-                  child: const Text(
-                    'Восстановить',
-                  ),
+                  child: const Text('Восстановить'),
                 ),
               ],
             );
@@ -564,10 +492,7 @@ class _WheelControllerPageState
     );
   }
 
-  Widget _buildTimeMachineRow(
-      String name,
-      String value,
-      ) {
+  Widget _buildTimeMachineRow(String name, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 5,
@@ -577,7 +502,9 @@ class _WheelControllerPageState
           Expanded(
             child: Text(name),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(
+              width: 10
+          ),
           Text(
             value,
             style: const TextStyle(
@@ -588,10 +515,6 @@ class _WheelControllerPageState
       ),
     );
   }
-
-  // ------------------------------------------------------------
-  // РАСЧЁТЫ
-  // ------------------------------------------------------------
 
   double get leftLinearSpeed {
     return leftWheelSpeed * wheelRadius;
@@ -613,47 +536,34 @@ class _WheelControllerPageState
     if (angularSpeed.abs() < 0.000001) {
       return null;
     }
-
     return (linearSpeed / angularSpeed).abs();
   }
 
   String get turningRadiusText {
-    if (leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return '—';
     }
-
     if (turningRadius == null) {
       return 'inf';
     }
-
     return '${turningRadius!.toStringAsFixed(3)} м';
   }
 
   String get movementStatus {
-    if (leftWheelSpeed == 0 &&
-        rightWheelSpeed == 0) {
+    if (leftWheelSpeed == 0 && rightWheelSpeed == 0) {
       return 'Стоит на месте';
     }
-
     if (leftWheelSpeed == rightWheelSpeed) {
       if (leftWheelSpeed > 0) {
         return 'Вперёд';
       }
-
       return 'Назад';
     }
-
     if (angularSpeed > 0) {
       return 'Поворот влево';
     }
-
     return 'Поворот вправо';
   }
-
-  // ------------------------------------------------------------
-  // СИМУЛЯЦИЯ
-  // ------------------------------------------------------------
 
   void _startSimulation() {
     if (isRunning) {
@@ -672,20 +582,13 @@ class _WheelControllerPageState
         final currentLinearSpeed = linearSpeed;
         final currentAngularSpeed = angularSpeed;
 
-        if (currentLinearSpeed.abs() < 0.000001 &&
-            currentAngularSpeed.abs() < 0.000001) {
+        if (currentLinearSpeed.abs() < 0.000001 && currentAngularSpeed.abs() < 0.000001) {
           return;
         }
 
         setState(() {
-          robotX += currentLinearSpeed *
-              math.cos(robotAngle) *
-              timeStep;
-
-          robotY += currentLinearSpeed *
-              math.sin(robotAngle) *
-              timeStep;
-
+          robotX += currentLinearSpeed * math.cos(robotAngle) * timeStep;
+          robotY += currentLinearSpeed * math.sin(robotAngle) * timeStep;
           robotAngle -= currentAngularSpeed * timeStep;
 
           trail.add(
@@ -727,79 +630,59 @@ class _WheelControllerPageState
     });
   }
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
-
   Widget _buildConnectionPanel() {
-    final Color statusColor =
-    isConnecting
+    final Color statusColor = isConnecting
         ? Colors.orange
         : isConnected
         ? Colors.green
         : Colors.red;
-
-    final IconData statusIcon =
-    isConnecting
+    final IconData statusIcon = isConnecting
         ? Icons.sync
         : isConnected
         ? Icons.check_circle
         : Icons.cancel;
-
-    final String statusText =
-    isConnecting
+    final String statusText = isConnecting
         ? 'Подключение к серверу'
         : isConnected
         ? 'Клиент подключен к серверу'
         : 'Клиент не подключен к серверу';
-
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment:
-              CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   statusIcon,
                   color: statusColor,
                   size: 32,
                 ),
-
                 const SizedBox(
                   width: 10,
                 ),
-
                 Expanded(
                   child: Text(
-                    statusText,
-                    maxLines: 2,
+                    statusText, maxLines: 2,
                     softWrap: true,
                     style: const TextStyle(
                       fontSize: 16,
-                      fontWeight:
-                      FontWeight.w700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-
                 const SizedBox(
                   width: 10,
                 ),
-
                 SizedBox(
                   width: 44,
                   height: 44,
                   child: IconButton.filled(
-                    tooltip:
-                    'Переподключиться',
-                    onPressed:
-                    isConnecting
+                    tooltip: 'Переподключиться',
+                    onPressed: isConnecting
                         ? null
                         : _connectToServer,
                     icon: const Icon(
@@ -810,25 +693,20 @@ class _WheelControllerPageState
                 ),
               ],
             ),
-
             if (isConnected) ...[
               const SizedBox(
                 height: 14,
               ),
-
               const Text(
                 'Адрес сервера:',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight:
-                  FontWeight.w700,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(
                 height: 4,
               ),
-
               Text(
                 serverAddress,
                 maxLines: 1,
@@ -837,23 +715,19 @@ class _WheelControllerPageState
                 ),
               ),
             ],
-
             if (isConnecting) ...[
               const SizedBox(
                 height: 14,
               ),
-
               const Text(
                 'Устанавливается соединение с сервером',
                 style: TextStyle(
                   fontSize: 15,
                 ),
               ),
-
               const SizedBox(
                 height: 4,
               ),
-
               Text(
                 serverAddress,
                 maxLines: 1,
@@ -877,12 +751,7 @@ class _WheelControllerPageState
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          14,
-          16,
-          12,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -896,7 +765,9 @@ class _WheelControllerPageState
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(
+                height: 6
+            ),
             Text(
               '$value рад/с',
               style: const TextStyle(
@@ -904,7 +775,9 @@ class _WheelControllerPageState
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(
+                height: 4
+            ),
             Slider(
               value: value.toDouble(),
               min: -10,
@@ -950,12 +823,7 @@ class _WheelControllerPageState
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          14,
-          16,
-          12,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -969,7 +837,9 @@ class _WheelControllerPageState
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(
+                height: 6
+            ),
             Text(
               '${value.toStringAsFixed(digits)} м',
               style: const TextStyle(
@@ -977,7 +847,9 @@ class _WheelControllerPageState
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(
+                height: 4
+            ),
             Slider(
               value: value,
               min: min,
@@ -991,15 +863,10 @@ class _WheelControllerPageState
                 horizontal: 8,
               ),
               child: Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    min.toStringAsFixed(digits),
-                  ),
-                  Text(
-                    max.toStringAsFixed(digits),
-                  ),
+                  Text(min.toStringAsFixed(digits)),
+                  Text(max.toStringAsFixed(digits)),
                 ],
               ),
             ),
@@ -1028,7 +895,9 @@ class _WheelControllerPageState
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(
+                  height: 8
+              ),
               Text(
                 movementStatus,
                 maxLines: 1,
@@ -1046,10 +915,7 @@ class _WheelControllerPageState
     );
   }
 
-  Widget _buildPhysicsRow(
-      String title,
-      String value,
-      ) {
+  Widget _buildPhysicsRow(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 5,
@@ -1066,7 +932,9 @@ class _WheelControllerPageState
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(
+              width: 12
+          ),
           Text(
             value,
             maxLines: 1,
@@ -1087,8 +955,7 @@ class _WheelControllerPageState
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Center(
               child: Text(
@@ -1100,7 +967,9 @@ class _WheelControllerPageState
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(
+                height: 12
+            ),
             _buildPhysicsRow(
               'Линейная скорость',
               '${linearSpeed.toStringAsFixed(3)} м/с',
@@ -1134,7 +1003,9 @@ class _WheelControllerPageState
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(
+                height: 10
+            ),
             SizedBox(
               height: 300,
               width: double.infinity,
@@ -1144,8 +1015,7 @@ class _WheelControllerPageState
                   border: Border.all(
                     color: Colors.grey,
                   ),
-                  borderRadius:
-                  BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: CustomPaint(
                   painter: RobotPainter(
@@ -1157,25 +1027,30 @@ class _WheelControllerPageState
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(
+                height: 12
+            ),
             Row(
               children: [
                 Expanded(
                   child: SizedBox(
                     height: 45,
                     child: FilledButton(
-                      onPressed:
-                      isRunning
+                      onPressed: isRunning
                           ? _stopSimulation
                           : _startSimulation,
                       child: Text(
-                        isRunning ? 'Стоп' : 'Старт',
+                        isRunning
+                            ? 'Стоп'
+                            : 'Старт',
                         maxLines: 1,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(
+                    width: 10
+                ),
                 Expanded(
                   child: SizedBox(
                     height: 45,
@@ -1219,24 +1094,21 @@ class _WheelControllerPageState
                 ),
                 IconButton(
                   tooltip: 'Машина времени',
-                  onPressed:
-                  logRows.isEmpty
+                  onPressed: logRows.isEmpty
                       ? null
                       : _showTimeMachine,
-                  icon: const Icon(
-                    Icons.history,
-                  ),
+                  icon: const Icon(Icons.history),
                 ),
               ],
             ),
-            const SizedBox(height: 5),
+            const SizedBox(
+                height: 5
+            ),
             SizedBox(
               height: 300,
               child: logRows.isEmpty
                   ? const Center(
-                child: Text(
-                  'Записей пока нет',
-                ),
+                child: Text('Записей пока нет'),
               )
                   : Scrollbar(
                 controller: logVerticalController,
@@ -1245,14 +1117,11 @@ class _WheelControllerPageState
                   controller: logVerticalController,
                   scrollDirection: Axis.vertical,
                   child: Scrollbar(
-                    controller:
-                    logHorizontalController,
+                    controller: logHorizontalController,
                     thumbVisibility: true,
                     child: SingleChildScrollView(
-                      controller:
-                      logHorizontalController,
-                      scrollDirection:
-                      Axis.horizontal,
+                      controller: logHorizontalController,
+                      scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowHeight: 42,
                         dataRowMinHeight: 40,
@@ -1276,8 +1145,7 @@ class _WheelControllerPageState
                             label: Text('radius'),
                           ),
                         ],
-                        rows:
-                        logRows.map((row) {
+                        rows: logRows.map((row) {
                           return DataRow(
                             cells: [
                               DataCell(
@@ -1290,14 +1158,10 @@ class _WheelControllerPageState
                                 Text('${row.rightWheelSpeed}'),
                               ),
                               DataCell(
-                                Text(
-                                  row.baseSize.toStringAsFixed(2),
-                                ),
+                                Text(row.baseSize.toStringAsFixed(2)),
                               ),
                               DataCell(
-                                Text(
-                                  row.wheelRadius.toStringAsFixed(2),
-                                ),
+                                Text(row.wheelRadius.toStringAsFixed(2)),
                               ),
                             ],
                           );
@@ -1314,14 +1178,8 @@ class _WheelControllerPageState
     );
   }
 
-  // ------------------------------------------------------------
-  // BUILD
-  // ------------------------------------------------------------
-
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -1336,7 +1194,9 @@ class _WheelControllerPageState
           child: Column(
             children: [
               _buildConnectionPanel(),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildWheelSlider(
                 title: 'Скорость левого колеса',
                 value: leftWheelSpeed,
@@ -1349,7 +1209,9 @@ class _WheelControllerPageState
                   _scheduleSaveValues();
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildWheelSlider(
                 title: 'Скорость правого колеса',
                 value: rightWheelSpeed,
@@ -1362,7 +1224,9 @@ class _WheelControllerPageState
                   _scheduleSaveValues();
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildSizeSlider(
                 title: 'Размер базы',
                 value: baseSize,
@@ -1379,7 +1243,9 @@ class _WheelControllerPageState
                   _scheduleSaveValues();
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildSizeSlider(
                 title: 'Радиус колеса',
                 value: wheelRadius,
@@ -1396,15 +1262,25 @@ class _WheelControllerPageState
                   _scheduleSaveValues();
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildSimulationPanel(),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildStatusPanel(),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildPhysicsPanel(),
-              const SizedBox(height: 10),
+              const SizedBox(
+                  height: 10
+              ),
               _buildLogPanel(),
-              const SizedBox(height: 12),
+              const SizedBox(
+                  height: 12
+              ),
             ],
           ),
         ),
@@ -1461,16 +1337,12 @@ class RobotPainter extends CustomPainter {
         );
       }
 
-      final trailPaint =
-      Paint()
+      final trailPaint = Paint()
         ..color = Colors.blue
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
 
-      canvas.drawPath(
-        path,
-        trailPaint,
-      );
+      canvas.drawPath(path, trailPaint);
     }
 
     final robotPosition = Offset(
@@ -1491,15 +1363,11 @@ class RobotPainter extends CustomPainter {
       height: bodySize,
     );
 
-    final bodyPaint =
-    Paint()
+    final bodyPaint = Paint()
       ..color = Colors.blue.shade300
       ..style = PaintingStyle.fill;
 
-    canvas.drawRect(
-      body,
-      bodyPaint,
-    );
+    canvas.drawRect(body, bodyPaint);
 
     const double wheelLength = 22;
     const double wheelThickness = 7;
@@ -1522,21 +1390,12 @@ class RobotPainter extends CustomPainter {
       height: wheelThickness,
     );
 
-    final wheelPaint =
-    Paint()..color = Colors.black;
+    final wheelPaint = Paint()
+      ..color = Colors.black;
+    canvas.drawRect(rightWheel, wheelPaint);
+    canvas.drawRect(leftWheel, wheelPaint);
 
-    canvas.drawRect(
-      rightWheel,
-      wheelPaint,
-    );
-
-    canvas.drawRect(
-      leftWheel,
-      wheelPaint,
-    );
-
-    final frontLinePaint =
-    Paint()
+    final frontLinePaint = Paint()
       ..color = Colors.white
       ..strokeWidth = 3;
 
@@ -1556,9 +1415,7 @@ class RobotPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(
-      RobotPainter oldDelegate,
-      ) {
+  bool shouldRepaint(RobotPainter oldDelegate) {
     return true;
   }
 }
