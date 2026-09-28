@@ -124,11 +124,11 @@ class _OptimizationPageState extends State<OptimizationPage> {
   String get formulaText {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
-        return 'f(x, y) = 2A + (x² - A cos(2πx)) + (y² - A cos(2πy))';
+        return 'f(x, y) = 2A + (x^2 - A cos(2πx)) + (y^2 - A cos(2piy))';
       case SurfaceFunction.rosenbrock:
-        return 'f(x, y) = 100(y - x²)² + (x - 1)²';
+        return 'f(x, y) = 100(y - x^2)^2 + (x - 1)^2';
       case SurfaceFunction.schafferN2:
-        return 'f(x, y) = 0.5 + (sin²(x² - y²) - 0.5) / (1 + 0.001(x² + y²))²';
+        return 'f(x, y) = 0.5 + (sin^2(x^2 - y^2) - 0.5) / (1 + 0.001(x^2 + y^2))^2';
     }
   }
 
@@ -152,10 +152,8 @@ class _OptimizationPageState extends State<OptimizationPage> {
       ];
 
       final neighbours = allNeighbours.where((point) {
-        return point.x >= -xyLimit &&
-            point.x <= xyLimit &&
-            point.y >= -xyLimit &&
-            point.y <= xyLimit;
+        return point.x >= -xyLimit && point.x <= xyLimit &&
+            point.y >= -xyLimit && point.y <= xyLimit;
       }).toList();
 
       if (neighbours.isEmpty) {
@@ -420,16 +418,8 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
       lines.add(
         Line3D(
-          Vector3(
-            current.x,
-            visualZ(current.z) + 0.05,
-            current.y,
-          ),
-          Vector3(
-            next.x,
-            visualZ(next.z) + 0.05,
-            next.y,
-          ),
+          Vector3(current.x, visualZ(current.z) + 0.05, current.y),
+          Vector3(next.x, visualZ(next.z) + 0.05, next.y),
           width: 3,
           color: Colors.red,
         ),
@@ -451,11 +441,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
       points.add(
         Point3D(
-          Vector3(
-            point.x,
-            visualZ(point.z) + 0.05,
-            point.y,
-          ),
+          Vector3(point.x, visualZ(point.z) + 0.05, point.y),
           width: 12,
           color: Colors.red,
         ),
@@ -466,16 +452,11 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
     points.add(
       Point3D(
-        Vector3(
-          last.x,
-          visualZ(last.z) + 0.05,
-          last.y,
-        ),
+        Vector3(last.x, visualZ(last.z) + 0.05, last.y),
         width: 16,
         color: Colors.green,
       ),
     );
-
     return points;
   }
 
