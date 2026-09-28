@@ -41,7 +41,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
   double x0 = 2.0;
   double y0 = 2.0;
   double h = 0.25;
-  double epsilon = 0.01;
+  double eps = 0.01;
 
   final List<StepPoint> path = [];
 
@@ -105,7 +105,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
       newPath.add(best);
 
-      if (difference < epsilon) {
+      if (difference < eps) {
         break;
       }
     }
@@ -214,7 +214,11 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
       points.add(
         Point3D(
-          Vector3(point.x, point.z + 0.05, point.y),
+          Vector3(
+            point.x,
+            point.z + 0.05,
+            point.y,
+          ),
           width: 12,
           color: Colors.red,
         ),
@@ -225,7 +229,11 @@ class _OptimizationPageState extends State<OptimizationPage> {
 
     points.add(
       Point3D(
-        Vector3(last.x, last.z + 0.05, last.y),
+        Vector3(
+          last.x,
+          last.z + 0.05,
+          last.y,
+        ),
         width: 16,
         color: Colors.green,
       ),
@@ -252,7 +260,9 @@ class _OptimizationPageState extends State<OptimizationPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(value.toStringAsFixed(digits)),
             ],
@@ -297,9 +307,12 @@ class _OptimizationPageState extends State<OptimizationPage> {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.only(top: 10, bottom: 5),
+            padding: EdgeInsets.only(
+              top: 10,
+              bottom: 5,
+            ),
             child: Text(
-              'f(x₁, x₂) = 0.25(x₁² + x₂²)',
+              'f(x, y) = 0.25(x² + y²)',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -307,7 +320,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
             ),
           ),
           slider(
-            title: 'x₁₀',
+            title: 'x0',
             value: x0,
             min: -3,
             max: 3,
@@ -321,7 +334,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
             },
           ),
           slider(
-            title: 'x₂₀',
+            title: 'y0',
             value: y0,
             min: -3,
             max: 3,
@@ -349,15 +362,15 @@ class _OptimizationPageState extends State<OptimizationPage> {
             },
           ),
           slider(
-            title: 'ε',
-            value: epsilon,
+            title: 'eps',
+            value: eps,
             min: 0.001,
             max: 0.1,
             divisions: 99,
             digits: 3,
             onChanged: (value) {
               setState(() {
-                epsilon = value;
+                eps = value;
                 clearPath();
               });
             },
