@@ -364,7 +364,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
               bottom: 5,
             ),
             child: Text(
-              'f(x, y) = 0.25(x² + y²)',
+              'f(x, y) = 0.25*x^2 + 0.25*y^2)',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
