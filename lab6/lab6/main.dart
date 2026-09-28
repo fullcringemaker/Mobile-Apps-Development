@@ -292,17 +292,69 @@ class _OptimizationPageState extends State<OptimizationPage> {
             child: Container(
               width: double.infinity,
               color: Colors.grey.shade100,
-              child: DiTreDiDraggable(
-                controller: controller,
-                child: DiTreDi(
-                  controller: controller,
-                  figures: [
-                    ...createParaboloid(),
-                    ...createAxes(),
-                    ...createPathLines(),
-                    ...createPathPoints(),
-                  ],
-                ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: DiTreDiDraggable(
+                      controller: controller,
+                      child: DiTreDi(
+                        controller: controller,
+                        figures: [
+                          ...createParaboloid(),
+                          ...createAxes(),
+                          ...createPathLines(),
+                          ...createPathPoints(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Card(
+                      elevation: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Оси:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'X — красная',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'Y — синяя',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'Z — зелёная',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -376,7 +428,12 @@ class _OptimizationPageState extends State<OptimizationPage> {
             },
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 5, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              5,
+              16,
+              16,
+            ),
             child: SizedBox(
               width: double.infinity,
               height: 48,
