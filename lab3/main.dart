@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'lab0.dart' as lab0;
 import 'lab1.dart' as lab1;
 import 'lab2.dart' as lab2;
-import 'lab3.dart' as lab3;
 
 void main() {
   runApp(const LaboratoryApp());
@@ -52,25 +52,21 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
 
   String getLabNumber(int index) {
     if (index == 0) {
+      return 'Лабораторная работа №0';
+    }
+    if (index == 1) {
       return 'Лабораторная работа №1';
     }
-
-    if (index == 1) {
-      return 'Лабораторная работа №2';
-    }
-
-    return 'Лабораторная работа №3';
+    return 'Лабораторная работа №2';
   }
 
   String getLabTitle(int index) {
     if (index == 0) {
       return 'Удалённый счётчик';
     }
-
     if (index == 1) {
       return 'Робот и IoControl';
     }
-
     return 'Робот и MySQL';
   }
 
@@ -78,13 +74,13 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
     Widget page;
 
     if (index == 0) {
-      page = const lab1.MyHomePage(
-        title: 'Лабораторная работа №1',
+      page = const lab0.MyHomePage(
+        title: 'Лабораторная работа №0',
       );
     } else if (index == 1) {
-      page = const lab2.WheelControllerPage();
+      page = const lab1.WheelControllerPage();
     } else {
-      page = const lab3.WheelControllerPage();
+      page = const lab2.WheelControllerPage();
     }
 
     Navigator.of(context).push(
@@ -152,36 +148,39 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
             ),
           ],
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 25,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(getLabNumber(index),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 25,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    getLabNumber(index),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-
-                const SizedBox(
-                  height: 16,
-                ),
-
-                Text(getLabTitle(index),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  const SizedBox(
+                    height: 16,
                   ),
-                ),
-              ],
+                  Text(
+                    getLabTitle(index),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -225,7 +224,6 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
                 buildPageIndicator(2),
               ],
             ),
-
             const SizedBox(
               height: 22,
             ),
