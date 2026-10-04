@@ -57,23 +57,18 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
     if (index == 0) {
       return 'Лабораторная работа №0';
     }
-
     if (index == 1) {
       return 'Лабораторная работа №1';
     }
-
     if (index == 2) {
       return 'Лабораторная работа №2';
     }
-
     if (index == 3) {
       return 'Лабораторная работа №4';
     }
-
     if (index == 4) {
       return 'Лабораторная работа №5';
     }
-
     return 'Лабораторная работа №6';
   }
 
@@ -81,23 +76,18 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
     if (index == 0) {
       return 'Удалённый счётчик';
     }
-
     if (index == 1) {
       return 'Робот и IoControl';
     }
-
     if (index == 2) {
       return 'Робот и MySQL';
     }
-
     if (index == 3) {
       return 'Робот и WebSocket (Client)';
     }
-
     if (index == 4) {
       return 'Бутылка';
     }
-
     return '3D-визуализация оптимизации';
   }
 
@@ -204,11 +194,9 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(
                     height: 16,
                   ),
-
                   Text(
                     getLabTitle(index),
                     textAlign: TextAlign.center,
@@ -232,9 +220,7 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground,
       navigationBar: const CupertinoNavigationBar(
-        middle: Text(
-          'Лабораторные работы',
-        ),
+        middle: Text('Лабораторные работы'),
       ),
       child: SafeArea(
         child: Column(
@@ -253,17 +239,13 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
                 },
               ),
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                6,
-                    (index) {
+              children: List.generate(6, (index) {
                   return buildPageIndicator(index);
                 },
               ),
             ),
-
             const SizedBox(
               height: 22,
             ),
