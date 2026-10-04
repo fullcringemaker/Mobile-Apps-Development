@@ -215,7 +215,6 @@ class _LaboratoryMenuPageState extends State<LaboratoryMenuPage> {
                 },
               ),
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
