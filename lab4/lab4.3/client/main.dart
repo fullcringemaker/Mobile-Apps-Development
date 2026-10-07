@@ -64,7 +64,7 @@ class WheelControllerPage extends StatefulWidget {
 }
 
 class _WheelControllerPageState extends State<WheelControllerPage> {
-  static const String serverIp = '172.17.55.24';
+  static const String serverIp = '10.18.238.131';
   static const int serverPort = 8080;
 
   WebSocket? webSocket;
