@@ -26,8 +26,7 @@ class PlanetPage extends StatefulWidget {
   State<PlanetPage> createState() => _PlanetPageState();
 }
 
-class _PlanetPageState extends State<PlanetPage>
-    with SingleTickerProviderStateMixin {
+class _PlanetPageState extends State<PlanetPage> with SingleTickerProviderStateMixin {
   cube.Scene? _planetScene;
   cube.Scene? _atmosphereScene;
   cube.Object? _planet;
@@ -68,15 +67,13 @@ class _PlanetPageState extends State<PlanetPage>
     final double dt = elapsed.clamp(0.0, 0.05).toDouble();
 
     if (_planet != null && _planetSpeed != 0) {
-      _planet!.rotation.y =
-          (_planet!.rotation.y + _planetSpeed * dt) % 360;
+      _planet!.rotation.y = (_planet!.rotation.y + _planetSpeed * dt) % 360;
       _planet!.updateTransform();
       _planetScene?.update();
     }
 
     if (_atmosphere != null && _atmosphereSpeed != 0) {
-      _atmosphere!.rotation.y =
-          (_atmosphere!.rotation.y + _atmosphereSpeed * dt) % 360;
+      _atmosphere!.rotation.y = (_atmosphere!.rotation.y + _atmosphereSpeed * dt) % 360;
       _atmosphere!.updateTransform();
       _atmosphereScene?.update();
     }
@@ -94,15 +91,9 @@ class _PlanetPageState extends State<PlanetPage>
     _addModelPart(scene, 'Sphere002', true);
   }
 
-  Future<void> _addModelPart(
-      cube.Scene scene,
-      String partName,
-      bool isAtmosphere,
-      ) async {
+  Future<void> _addModelPart(cube.Scene scene, String partName, bool isAtmosphere) async {
     try {
-      // earth.obj contains Sphere001 (planet) and Sphere002 (clouds).
-      final List<cube.Mesh> meshes = await (_meshesFuture ??=
-          cube.loadObj('assets/earth/earth.obj', true));
+      final List<cube.Mesh> meshes = await (_meshesFuture ??= cube.loadObj('assets/earth/earth.obj', true));
 
       if (!mounted) return;
       if (isAtmosphere && _atmosphereScene != scene) return;
@@ -113,8 +104,6 @@ class _PlanetPageState extends State<PlanetPage>
         orElse: () => throw StateError('Model part not found: $partName'),
       );
 
-      // Load the correct texture explicitly. This also works if
-      // the OBJ loader could not read textures from earth.mtl.
       final String texturePath = isAtmosphere
           ? 'assets/earth/4096_clouds.png'
           : 'assets/earth/4096_earth.jpg';
@@ -167,11 +156,7 @@ class _PlanetPageState extends State<PlanetPage>
     return 'По часовой стрелке';
   }
 
-  Widget _speedSlider(
-      String title,
-      double speed,
-      ValueChanged<double> onChanged,
-      ) {
+  Widget _speedSlider(String title, double speed, ValueChanged<double> onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
