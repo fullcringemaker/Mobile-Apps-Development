@@ -61,12 +61,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   List<Model3D> _figures(List<Mesh3D> meshes) {
-    final radius = 1.25 - 0.35 * grip;
+    final radius = 1.1 - 0.3 * grip;
     return [
       _moveWithHand(
         cylinder,
         vector.Matrix4.identity()
-          ..translateByDouble(-0.5, 5.7, -1.0, 1)
+          ..translateByDouble(-0.5, 5.1, -1.5, 1)
           ..scaleByDouble(4.9, radius, radius, 1),
       ),
       _moveWithHand(
@@ -221,6 +221,7 @@ class _MyAppState extends State<MyApp> {
                       (value) => pinkyAngle = value,
                       divisions: 13,
                     ),
+                    Text('Сжатие цилиндра: ${(grip * 100).round()}%'),
                     const Divider(),
                     const Text('Перемещение руки с цилиндром'),
                     _slider(
@@ -271,6 +272,7 @@ Future<List<Mesh3D>> _loadHand() async {
 
 Mesh3D _makeCylinder() {
   const segments = 32;
+  const lengthSegments = 24;
   final faces = <Face3D>[];
   final left = vector.Vector3(-1, 0, 0);
   final right = vector.Vector3(1, 0, 0);
@@ -278,14 +280,40 @@ Mesh3D _makeCylinder() {
   for (var i = 0; i < segments; i++) {
     final a = 2 * math.pi * i / segments;
     final b = 2 * math.pi * (i + 1) / segments;
-    final l0 = vector.Vector3(-1, math.cos(a), math.sin(a));
-    final l1 = vector.Vector3(-1, math.cos(b), math.sin(b));
-    final r0 = vector.Vector3(1, math.cos(a), math.sin(a));
-    final r1 = vector.Vector3(1, math.cos(b), math.sin(b));
-    faces.add(Face3D.fromVertices(l0, r1, r0, color: Colors.orange));
-    faces.add(Face3D.fromVertices(l0, l1, r1, color: Colors.orange));
-    faces.add(Face3D.fromVertices(left, l1, l0, color: Colors.deepOrange));
-    faces.add(Face3D.fromVertices(right, r0, r1, color: Colors.deepOrange));
+    final cosA = math.cos(a);
+    final sinA = math.sin(a);
+    final cosB = math.cos(b);
+    final sinB = math.sin(b);
+    for (var j = 0; j < lengthSegments; j++) {
+      final x0 = -1 + 2 * j / lengthSegments;
+      final x1 = -1 + 2 * (j + 1) / lengthSegments;
+      final l0 = vector.Vector3(x0, cosA, sinA);
+      final l1 = vector.Vector3(x0, cosB, sinB);
+      final r0 = vector.Vector3(x1, cosA, sinA);
+      final r1 = vector.Vector3(x1, cosB, sinB);
+      faces.add(
+        Face3D.fromVertices(l0, r1, r0, color: const Color(0xFFFF9800)),
+      );
+      faces.add(
+        Face3D.fromVertices(l0, l1, r1, color: const Color(0xFFFF9800)),
+      );
+    }
+    faces.add(
+      Face3D.fromVertices(
+        left,
+        vector.Vector3(-1, cosB, sinB),
+        vector.Vector3(-1, cosA, sinA),
+        color: const Color(0xFFE65100),
+      ),
+    );
+    faces.add(
+      Face3D.fromVertices(
+        right,
+        vector.Vector3(1, cosA, sinA),
+        vector.Vector3(1, cosB, sinB),
+        color: const Color(0xFFE65100),
+      ),
+    );
   }
   return Mesh3D(faces);
 }
