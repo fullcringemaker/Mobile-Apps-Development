@@ -33,7 +33,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   bool ballOut = false;
 
   vector.Vector3 ballPosition = vector.Vector3(2.0, 11.8, -1.5);
-  vector.Vector3 ballVelocity = vector.Vector3.zero(); // Initial w = 0.
+  vector.Vector3 ballVelocity = vector.Vector3.zero();
 
   late final Future<List<Mesh3D>> models = _loadModels();
   late final Mesh3D ballMesh = _makeSphere(_ballRadius);
@@ -114,8 +114,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   }
 
   TransformModifier3D _handPart(Model3D mesh, vector.Matrix4 local) {
-    // Rotate the right-hand grip around the vertical handle so the fingers
-    // point toward the wall while the index stays above the pinky.
     return TransformModifier3D(
       mesh,
       _handPose()
@@ -212,7 +210,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     final oldPosition = ballPosition.clone();
     ballPosition.add(ballVelocity.scaled(dt));
 
-    // The wall is fixed. Only the component perpendicular to it reverses.
     final wallContact = _wallFaceX - _ballRadius;
     if (ballVelocity.x > 0 &&
         oldPosition.x < wallContact &&
@@ -225,7 +222,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       ballVelocity.x = -ballVelocity.x;
     }
 
-    // A finite elliptical hit area approximates the racket's string bed.
     final center = _racketCenter();
     final normal = _racketNormal();
     final oldDistance = (oldPosition - center).dot(normal);
