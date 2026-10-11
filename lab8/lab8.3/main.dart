@@ -18,12 +18,17 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   static const double _ballRadius = 0.42;
   static const double _impulseSpeed = 6.5;
   static const double _wallFaceX = 14.0;
+  static const double _wallBottom = -4.0;
+  static const double _wallTop = 26.0;
+  static const double _wallNear = -16.0;
+  static const double _wallFar = 16.0;
 
   double bend = 0;
   double handX = 0;
   double handY = 0;
   double handZ = 0;
   double racketAngle = 0;
+  double tiltAngle = 0;
   bool gripped = false;
   bool ballOut = false;
 
@@ -33,8 +38,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   late final Future<List<Mesh3D>> models = _loadModels();
   late final Mesh3D ballMesh = _makeSphere(_ballRadius);
   late final Mesh3D wallMesh = _makeBox(
-    vector.Vector3(14, 2, -7),
-    vector.Vector3(14.8, 20, 7),
+    vector.Vector3(_wallFaceX, _wallBottom, _wallNear),
+    vector.Vector3(15.6, _wallTop, _wallFar),
     const Color(0xFF78909C),
   );
   late final Ticker _ticker;
@@ -61,10 +66,11 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
   vector.Matrix4 _handPose() => vector.Matrix4.identity()
     ..translateByDouble(handX, handY, handZ, 1)
-    ..rotateY(racketAngle * math.pi / 180);
+    ..rotateY(racketAngle * math.pi / 180)
+    ..rotateZ(tiltAngle * math.pi / 180);
 
   vector.Matrix4 _racketMatrix() => _handPose()
-    ..translateByDouble(0, 5.1, -1.5, 1)
+    ..translateByDouble(-0.5, 5.1, -1.1, 1)
     ..rotateZ(math.pi / 2)
     ..scaleByDouble(1.4, 1.4, 1.4, 1);
 
@@ -72,8 +78,23 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       _racketMatrix().transform3(vector.Vector3(4.8, 0, 0));
 
   vector.Vector3 _racketNormal() {
-    final radians = racketAngle * math.pi / 180;
-    return vector.Vector3(math.cos(radians), 0, -math.sin(radians));
+    final yaw = racketAngle * math.pi / 180;
+    final pitch = tiltAngle * math.pi / 180;
+    return vector.Vector3(
+      math.cos(yaw) * math.cos(pitch),
+      math.sin(pitch),
+      -math.sin(yaw) * math.cos(pitch),
+    );
+  }
+
+  vector.Vector3 _racketVertical() {
+    final yaw = racketAngle * math.pi / 180;
+    final pitch = tiltAngle * math.pi / 180;
+    return vector.Vector3(
+      -math.cos(yaw) * math.sin(pitch),
+      math.cos(pitch),
+      math.sin(yaw) * math.sin(pitch),
+    );
   }
 
   vector.Matrix4 _fingerMatrix({
@@ -196,10 +217,10 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     if (ballVelocity.x > 0 &&
         oldPosition.x < wallContact &&
         ballPosition.x >= wallContact &&
-        ballPosition.y >= 2 &&
-        ballPosition.y <= 20 &&
-        ballPosition.z >= -7 &&
-        ballPosition.z <= 7) {
+        ballPosition.y >= _wallBottom &&
+        ballPosition.y <= _wallTop &&
+        ballPosition.z >= _wallNear &&
+        ballPosition.z <= _wallFar) {
       ballPosition.x = 2 * wallContact - ballPosition.x;
       ballVelocity.x = -ballVelocity.x;
     }
@@ -209,9 +230,10 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     final normal = _racketNormal();
     final oldDistance = (oldPosition - center).dot(normal);
     final distance = (ballPosition - center).dot(normal);
-    final tangent = vector.Vector3(-normal.z, 0, normal.x);
+    final yaw = racketAngle * math.pi / 180;
+    final tangent = vector.Vector3(math.sin(yaw), 0, math.cos(yaw));
     final relative = ballPosition - center;
-    final vertical = relative.y / 3.3;
+    final vertical = relative.dot(_racketVertical()) / 3.3;
     final sideways = relative.dot(tangent) / 2.55;
     if (ballVelocity.dot(normal) < 0 &&
         oldDistance > _ballRadius &&
@@ -222,11 +244,11 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     }
 
     if (ballPosition.x < -8 ||
-        ballPosition.x > 21 ||
-        ballPosition.y < -11 ||
-        ballPosition.y > 24 ||
-        ballPosition.z < -11 ||
-        ballPosition.z > 11) {
+        ballPosition.x > 22 ||
+        ballPosition.y < -15 ||
+        ballPosition.y > 30 ||
+        ballPosition.z < -24 ||
+        ballPosition.z > 24) {
       ballOut = true;
       _ticker.stop();
     }
@@ -241,6 +263,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       handY = 0;
       handZ = 0;
       racketAngle = 0;
+      tiltAngle = 0;
       gripped = false;
       ballOut = false;
       ballPosition = vector.Vector3(2.0, 11.8, -1.5);
@@ -275,10 +298,10 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ракетка и мяч',
+      title: 'Lab8',
       theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
       home: Scaffold(
-        appBar: AppBar(title: const Text('Ракетка и мяч')),
+        appBar: AppBar(title: const Text('Lab8')),
         body: SafeArea(
           child: Column(
             children: [
@@ -309,23 +332,12 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        ballOut
-                            ? 'Мяч улетел за пределы сцены'
-                            : gripped
-                            ? 'Мяч движется: отражение от стены и ракетки'
-                            : 'Сожмите пальцы до конца, чтобы взять ракетку',
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _reset,
-                      icon: const Icon(Icons.replay),
-                      label: const Text('Сброс'),
-                    ),
-                  ],
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _reset,
+                    child: const Text('Сброс'),
+                  ),
                 ),
               ),
               Expanded(
@@ -375,12 +387,20 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                         (value) => setState(() => handZ = value),
                       ),
                       _slider(
-                        'Угол °',
+                        'Угол',
                         racketAngle,
                         -60,
                         60,
                         48,
                         (value) => setState(() => racketAngle = value),
+                      ),
+                      _slider(
+                        'Наклон',
+                        tiltAngle,
+                        -50,
+                        50,
+                        40,
+                        (value) => setState(() => tiltAngle = value),
                       ),
                     ],
                   ],
