@@ -65,8 +65,8 @@ class _MyAppState extends State<MyApp>
   final _formKey = GlobalKey<FormState>();
   final _pressed = <int, String>{};
   final _controller = DiTreDiController(
-    rotationX: -12,
-    rotationY: -65,
+    rotationX: 0,
+    rotationY: -90,
     userScale: 1.8,
     maxUserScale: 5,
     light: vector.Vector3(-0.5, -0.5, 0.5),
@@ -105,8 +105,7 @@ class _MyAppState extends State<MyApp>
   List<PlayerPose> get _visiblePlayers => [
     for (var i = 0; i < 2; i++) PlayerPose.mix(_from[i], _to[i], _blend.value),
   ];
-  vector.Vector3 get _visibleBall =>
-      _ballFrom + (_ballTo - _ballFrom).scaled(_blend.value);
+  vector.Vector3 get _visibleBall => _ballFrom + (_ballTo - _ballFrom).scaled(_blend.value);
   PlayerPose get _me => _to[_slot - 1];
   bool get _canMove => _connected && _me.gripped && !_paused;
 
@@ -591,13 +590,10 @@ class _MyAppState extends State<MyApp>
       if (!snapshot.hasData) {
         return const Center(child: CircularProgressIndicator());
       }
-      return DiTreDiDraggable(
+      return DiTreDi(
+        figures: _figures(snapshot.data!),
+        bounds: _bounds,
         controller: _controller,
-        child: DiTreDi(
-          figures: _figures(snapshot.data!),
-          bounds: _bounds,
-          controller: _controller,
-        ),
       );
     },
   );
@@ -632,15 +628,6 @@ class _MyAppState extends State<MyApp>
             ? null
             : [
                 IconButton(
-                  tooltip: 'Исходный ракурс',
-                  onPressed: () => _controller.update(
-                    rotationX: -12,
-                    rotationY: -65,
-                    userScale: 1.8,
-                  ),
-                  icon: const Icon(Icons.center_focus_strong),
-                ),
-                IconButton(
                   tooltip: 'Подключение',
                   onPressed: _settings,
                   icon: const Icon(Icons.settings),
@@ -657,7 +644,6 @@ Future<List<Mesh3D>> _loadModels() async {
   final racket = Mesh3D(
     await parser.loadFromResources('assets/racket/racket.obj'),
   );
-  // Keep the strings and grip materials; tint only the blue frame of player 2.
   final secondRacket = Mesh3D(
     racket.faces.map((face) {
       final color = face.color;
@@ -717,8 +703,6 @@ Mesh3D _makeBox(vector.Vector3 min, vector.Vector3 max, Color color) {
     vector.Vector3 c,
     vector.Vector3 d,
   ) {
-    // DiTreDi orders triangles by average depth. Small wall triangles prevent
-    // a large face from incorrectly painting over the hands and rackets.
     final columns = (a.distanceTo(b) / 2).ceil();
     final rows = (a.distanceTo(d) / 2).ceil();
     vector.Vector3 at(int col, int row) =>
