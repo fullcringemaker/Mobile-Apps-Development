@@ -60,15 +60,12 @@ class _MyAppState extends State<MyApp>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const double _ballRadius = 0.42;
   static const _playerColors = [Color(0xFF1565C0), Color(0xFFEF6C00)];
-  static const _serverUrl = 'wss://net11.yss.su/tennis/ws';
-  final _room = TextEditingController(text: 'lab8');
-  final _formKey = GlobalKey<FormState>();
+  static const _serverUrl = 'ws://net11.yss.su:8765';
   final _pressed = <int, String>{};
   final _controller = DiTreDiController(
     rotationX: 0,
     rotationY: -90,
     userScale: 1.8,
-    maxUserScale: 5,
     light: vector.Vector3(-0.5, -0.5, 0.5),
   );
   final _bounds = vector.Aabb3.minMax(
@@ -85,11 +82,10 @@ class _MyAppState extends State<MyApp>
   late final AnimationController _blend;
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
-  Timer? _heartbeat, _joinDeadline, _retryTimer;
-  int _generation = 0, _retryCount = 0, _slot = 1, _seq = -1;
+  Timer? _heartbeat, _joinDeadline;
+  int _generation = 0, _slot = 1;
   bool _showForm = true, _connecting = false, _connected = false;
-  bool _rejected = false, _paused = false, _disposed = false;
-  String? _token, _tokenKey;
+  bool _paused = false;
   String _notice = '', _phase = 'waiting';
   List<PlayerPose> _from = const [
     PlayerPose(id: 1, z: 5, yaw: 20),
@@ -105,7 +101,8 @@ class _MyAppState extends State<MyApp>
   List<PlayerPose> get _visiblePlayers => [
     for (var i = 0; i < 2; i++) PlayerPose.mix(_from[i], _to[i], _blend.value),
   ];
-  vector.Vector3 get _visibleBall => _ballFrom + (_ballTo - _ballFrom).scaled(_blend.value);
+  vector.Vector3 get _visibleBall =>
+      _ballFrom + (_ballTo - _ballFrom).scaled(_blend.value);
   PlayerPose get _me => _to[_slot - 1];
   bool get _canMove => _connected && _me.gripped && !_paused;
 
@@ -129,100 +126,71 @@ class _MyAppState extends State<MyApp>
     if (_paused) {
       _pressed.clear();
       _sendInput();
-    } else if (!_showForm && !_connected && !_connecting) {
-      _connect(retry: true);
     }
     if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _disposed = true;
     _generation++;
     WidgetsBinding.instance.removeObserver(this);
     _heartbeat?.cancel();
     _joinDeadline?.cancel();
-    _retryTimer?.cancel();
     _subscription?.cancel();
     _channel?.sink.close();
     _blend.dispose();
     _controller.dispose();
-    _room.dispose();
     super.dispose();
   }
 
-  Future<void> _connect({bool retry = false}) async {
-    if (_disposed || _connecting) return;
-    if (!retry && !(_formKey.currentState?.validate() ?? true)) return;
-    _retryTimer?.cancel();
+  Future<void> _connect() async {
+    if (!mounted || _connecting) return;
     _joinDeadline?.cancel();
     _heartbeat?.cancel();
     _pressed.clear();
     _connecting = true;
-    _generation++;
+    final generation = ++_generation;
     await _subscription?.cancel();
     try {
       await _channel?.sink.close();
     } catch (_) {}
-    if (_disposed) return;
-    final generation = ++_generation;
-    final room = _room.text.trim();
-    final key = '$room|$_slot';
-    if (_tokenKey != key) {
-      _token = null;
-      _tokenKey = key;
-    }
-    if (!retry) _retryCount = 0;
+    if (!mounted || generation != _generation) return;
     setState(() {
       _connecting = true;
       _connected = false;
-      _rejected = false;
-      _notice = retry ? 'Переподключение…' : 'Подключение…';
-      _seq = -1;
+      _notice = '';
     });
     try {
       final channel = WebSocketChannel.connect(Uri.parse(_serverUrl));
       _channel = channel;
       _subscription = channel.stream.listen(
         (event) => _receive(event, generation),
-        onError: (Object error) => _lost(generation, 'Сервер недоступен'),
-        onDone: () => _lost(generation, 'Связь с сервером потеряна'),
+        onError: (Object error) => _lost(generation),
+        onDone: () => _lost(generation),
         cancelOnError: true,
       );
       await channel.ready.timeout(const Duration(seconds: 8));
-      if (generation != _generation || _disposed) return;
-      channel.sink.add(
-        jsonEncode({
-          'type': 'join',
-          'version': 1,
-          'room': room,
-          'player': _slot,
-          if (_token != null) 'token': _token,
-        }),
-      );
+      if (generation != _generation || !mounted) return;
+      channel.sink.add(jsonEncode({'type': 'join', 'player': _slot}));
       _joinDeadline = Timer(const Duration(seconds: 8), () {
-        _lost(generation, 'Сервер не подтвердил подключение');
+        _lost(generation);
       });
     } catch (_) {
-      _lost(generation, 'Не удалось подключиться');
+      _lost(generation);
     }
   }
 
   void _receive(dynamic event, int generation) {
-    if (generation != _generation || _disposed || event is! String) return;
+    if (generation != _generation || !mounted || event is! String) return;
     try {
       final data = jsonDecode(event) as Map<String, dynamic>;
       if (data['type'] == 'error') {
-        _rejected = true;
-        _lost(generation, data['message'] as String);
+        _lost(generation, 'Место занято');
         return;
       }
-      if (data['version'] != 1) throw const FormatException('Protocol version');
       if (data['type'] == 'welcome') {
         _joinDeadline?.cancel();
-        _token = data['token'] as String;
         _slot = data['player'] as int;
-        _retryCount = 0;
         setState(() {
           _connected = true;
           _connecting = false;
@@ -233,14 +201,14 @@ class _MyAppState extends State<MyApp>
           const Duration(milliseconds: 50),
           (_) => _sendInput(),
         );
-      } else if (data['type'] == 'state' && (data['seq'] as int) > _seq) {
+      } else if (data['type'] == 'state') {
         final players = (data['players'] as List)
             .map((p) => PlayerPose.fromJson(p as Map<String, dynamic>))
             .toList();
         if (players.length != 2 || players[0].id != 1 || players[1].id != 2) {
-          throw const FormatException('Players');
+          throw const FormatException();
         }
-        final pos = (data['ball'] as Map<String, dynamic>)['position'] as List;
+        final pos = data['ball'] as List;
         final ball = vector.Vector3(
           (pos[0] as num).toDouble(),
           (pos[1] as num).toDouble(),
@@ -251,22 +219,21 @@ class _MyAppState extends State<MyApp>
         _ballFrom = changedPhase ? ball.clone() : _visibleBall;
         _to = players;
         _ballTo = ball;
-        _seq = data['seq'] as int;
         _phase = data['phase'] as String;
         _blend.forward(from: changedPhase ? 1 : 0);
         setState(() {});
       }
     } catch (_) {
-      _rejected = true;
-      _lost(generation, 'Ошибка ответа сервера');
+      _lost(generation);
     }
   }
 
-  void _lost(int generation, String message) {
-    if (generation != _generation || _disposed) return;
+  void _lost(int generation, [String message = 'Нет связи с сервером']) {
+    if (generation != _generation || !mounted) return;
     _generation++;
     _heartbeat?.cancel();
     _joinDeadline?.cancel();
+    _blend.stop();
     _pressed.clear();
     _subscription?.cancel();
     _subscription = null;
@@ -277,13 +244,6 @@ class _MyAppState extends State<MyApp>
       _connecting = false;
       _notice = message;
     });
-    if (!_showForm && !_rejected && !_paused && _retryCount < 5) {
-      _retryCount++;
-      _retryTimer = Timer(
-        const Duration(seconds: 2),
-        () => _connect(retry: true),
-      );
-    }
   }
 
   void _send(Map<String, dynamic> data) {
@@ -291,7 +251,7 @@ class _MyAppState extends State<MyApp>
     try {
       _channel!.sink.add(jsonEncode(data));
     } catch (_) {
-      _lost(_generation, 'Не удалось отправить управление');
+      _lost(_generation);
     }
   }
 
@@ -303,7 +263,6 @@ class _MyAppState extends State<MyApp>
   void _settings() {
     _send({'type': 'input', 'actions': <String>[]});
     _generation++;
-    _retryTimer?.cancel();
     _heartbeat?.cancel();
     _joinDeadline?.cancel();
     _pressed.clear();
@@ -389,45 +348,29 @@ class _MyAppState extends State<MyApp>
       padding: const EdgeInsets.all(20),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _room,
-                enabled: !_connecting,
-                decoration: const InputDecoration(
-                  labelText: 'Комната',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    RegExp(r'^[A-Za-z0-9_-]{1,24}$').hasMatch(v ?? '')
-                    ? null
-                    : '1–24 символа: латиница, цифры, _ или -',
-              ),
-              const SizedBox(height: 16),
-              SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(value: 1, label: Text('Игрок 1')),
-                  ButtonSegment(value: 2, label: Text('Игрок 2')),
-                ],
-                selected: {_slot},
-                onSelectionChanged: _connecting
-                    ? null
-                    : (v) => setState(() => _slot = v.first),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _connecting ? null : () => _connect(),
-                child: Text(_connecting ? 'Подключение…' : 'Подключиться'),
-              ),
-              if (_notice.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(_notice, style: const TextStyle(color: Colors.deepOrange)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 1, label: Text('Игрок 1')),
+                ButtonSegment(value: 2, label: Text('Игрок 2')),
               ],
+              selected: {_slot},
+              onSelectionChanged: _connecting
+                  ? null
+                  : (v) => setState(() => _slot = v.first),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _connecting ? null : () => _connect(),
+              child: Text(_connecting ? 'Подключение…' : 'Подключиться'),
+            ),
+            if (_notice.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(_notice, style: const TextStyle(color: Colors.deepOrange)),
             ],
-          ),
+          ],
         ),
       ),
     ),
@@ -583,9 +526,7 @@ class _MyAppState extends State<MyApp>
     future: _models,
     builder: (context, snapshot) {
       if (snapshot.hasError) {
-        return Center(
-          child: Text('Ошибка загрузки моделей: ${snapshot.error}'),
-        );
+        return Center(child: const Text('Не удалось загрузить модели'));
       }
       if (!snapshot.hasData) {
         return const Center(child: CircularProgressIndicator());
