@@ -159,9 +159,9 @@ class _BallisticsPageState extends State<BallisticsPage> with SingleTickerProvid
               ),
             ),
             const SizedBox(height: 16),
-            _slider('Угол α', _angle, 5, 85, '°', (value) => _angle = value),
+            _slider('Угол alpha', _angle, 5, 85, ' град.', (value) => _angle = value),
             _slider(
-              'Скорость V₀',
+              'Скорость V0',
               _speed,
               4,
               32,
@@ -174,11 +174,11 @@ class _BallisticsPageState extends State<BallisticsPage> with SingleTickerProvid
               _gravity,
               3,
               20,
-              ' м/с²',
+              ' м/с^2',
               (value) => _gravity = value,
             ),
             _slider(
-              'Потеря скорости ΔV',
+              'Потеря скорости delta V',
               _deltaV,
               0.5,
               5,
@@ -192,7 +192,7 @@ class _BallisticsPageState extends State<BallisticsPage> with SingleTickerProvid
   }
 
   Widget _slider(String title, double value, double min, double max, String unit, ValueChanged<double> update) {
-    final shown = title == 'Угол α'
+    final shown = title == 'Угол alpha'
         ? value.toStringAsFixed(0)
         : value.toStringAsFixed(1);
     return Column(
