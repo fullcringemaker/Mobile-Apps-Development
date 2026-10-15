@@ -60,8 +60,9 @@ class _MyAppState extends State<MyApp>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const double _ballRadius = 0.42;
   static const _playerColors = [Color(0xFF1565C0), Color(0xFFEF6C00)];
-  static const _serverUrl = 'ws://net11.yss.su:8765';
+  static const _serverUrl = 'ws://net11.yss.su:9742';
   final _pressed = <int, String>{};
+  double _cameraScale = 1.8;
   final _controller = DiTreDiController(
     rotationX: 0,
     rotationY: -90,
@@ -531,10 +532,29 @@ class _MyAppState extends State<MyApp>
       if (!snapshot.hasData) {
         return const Center(child: CircularProgressIndicator());
       }
-      return DiTreDi(
-        figures: _figures(snapshot.data!),
-        bounds: _bounds,
-        controller: _controller,
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onScaleStart: (_) => _cameraScale = _controller.userScale,
+        onScaleUpdate: (details) {
+          if (details.pointerCount == 1) {
+            _controller.update(
+              rotationX:
+                  (_controller.rotationX - details.focalPointDelta.dy / 2)
+                      .clamp(-85.0, 85.0),
+              rotationY: _controller.rotationY - details.focalPointDelta.dx / 2,
+            );
+          } else {
+            _controller.update(
+              userScale: _cameraScale * details.scale,
+              translation: _controller.translation + details.focalPointDelta,
+            );
+          }
+        },
+        child: DiTreDi(
+          figures: _figures(snapshot.data!),
+          bounds: _bounds,
+          controller: _controller,
+        ),
       );
     },
   );
