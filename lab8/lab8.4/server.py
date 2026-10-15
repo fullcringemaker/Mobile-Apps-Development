@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from aiohttp import WSMsgType, web
 
-HOST, PORT = "0.0.0.0", 8765
+HOST, PORT = "0.0.0.0", 9742
 BALL_RADIUS, BALL_SPEED = 0.42, 6.5
 WALL_X, WALL_BOTTOM, WALL_TOP = 14.0, -4.0, 26.0
 WALL_NEAR, WALL_FAR = -16.0, 16.0
