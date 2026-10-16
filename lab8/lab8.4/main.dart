@@ -364,7 +364,7 @@ class _MyAppState extends State<MyApp>
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _connecting ? null : () => _connect(),
-              child: Text(_connecting ? 'Подключение…' : 'Подключиться'),
+              child: Text(_connecting ? 'Подключение' : 'Подключиться'),
             ),
             if (_notice.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -464,12 +464,12 @@ class _MyAppState extends State<MyApp>
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _connecting ? null : () => _connect(),
-            child: Text(_connecting ? 'Подключение…' : 'Подключиться снова'),
+            child: Text(_connecting ? 'Подключение' : 'Подключиться снова'),
           ),
         ] else if (!_me.gripped)
           FilledButton(
             onPressed: () => _send({'type': 'grab'}),
-            child: Text(_me.bend > 0 ? 'Сжимаем пальцы…' : 'Взять ракетку'),
+            child: Text(_me.bend > 0 ? 'Сжимаем пальцы' : 'Взять ракетку'),
           ),
         const SizedBox(height: 8),
         Row(
@@ -579,11 +579,11 @@ class _MyAppState extends State<MyApp>
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Lab8 · Теннис вдвоём',
+    title: 'Lab8 - Теннис вдвоём',
     theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
     home: Scaffold(
       appBar: AppBar(
-        title: Text(_showForm ? 'Lab8' : 'Lab8 · Игрок $_slot'),
+        title: Text(_showForm ? 'Lab8' : 'Lab8 - Игрок $_slot'),
         actions: _showForm
             ? null
             : [
