@@ -306,7 +306,8 @@ class BottlePainter extends CustomPainter {
 
     bottlePath.lineTo(
         left, 
-        shoulderEnd);
+        shoulderEnd
+    );
 
     bottlePath.cubicTo(
       left,
