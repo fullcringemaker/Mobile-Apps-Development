@@ -111,8 +111,7 @@ class _MyAppState extends State<MyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _blend =
-        AnimationController(
+    _blend = AnimationController(
           vsync: this,
           duration: const Duration(milliseconds: 34),
           value: 1,
