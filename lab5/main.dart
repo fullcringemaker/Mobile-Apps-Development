@@ -368,8 +368,6 @@ class BottlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BottlePainter oldDelegate) {
-    return oldDelegate.h != h ||
-        oldDelegate.d != d ||
-        oldDelegate.k != k;
+    return oldDelegate.h != h || oldDelegate.d != d || oldDelegate.k != k;
   }
 }
