@@ -94,14 +94,10 @@ class _ClientPageState extends State<ClientPage> {
   @override
   void initState() {
     super.initState();
-    _host = TextEditingController(
-      text: _isFtp ? 'students.yss.su' : 'net11.yss.su',
-    );
+    _host = TextEditingController(text: _isFtp ? 'students.yss.su' : 'net11.yss.su');
     _port = TextEditingController(text: _isFtp ? '21' : '22');
     _user = TextEditingController(text: _isFtp ? 'ftpiu8' : 'root');
-    _password = TextEditingController(
-      text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0',
-    );
+    _password = TextEditingController(text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0');
   }
 
   @override
@@ -309,7 +305,6 @@ class _ClientPageState extends State<ClientPage> {
           if (!formKey.currentState!.validate()) return;
           Navigator.pop(dialogContext, _filePath.text.trim());
         }
-
         return AlertDialog(
           title: const Text('Отправить файл'),
           content: SizedBox(
@@ -321,7 +316,6 @@ class _ClientPageState extends State<ClientPage> {
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'Путь к файлу',
-                  hintText: r'C:\Users\user\Documents\file.txt',
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Укажите путь к файлу'
@@ -445,7 +439,6 @@ class _ClientPageState extends State<ClientPage> {
               enabled: !_busy && _connected,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: 'Введите команду',
                 isDense: true,
               ),
               onSubmitted: (_) => _sendCommand(),
