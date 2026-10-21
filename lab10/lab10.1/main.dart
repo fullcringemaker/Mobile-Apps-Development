@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,7 +30,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Сетевые клиенты')),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
@@ -39,26 +39,24 @@ class HomePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              FilledButton.icon(
+              FilledButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
                     builder: (_) => const ClientPage(kind: ClientKind.ftp),
                   ),
                 ),
-                icon: const Icon(Icons.folder_outlined),
-                label: const Text('FTP-клиент'),
+                child: const Text('FTP-клиент'),
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
+              FilledButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
                     builder: (_) => const ClientPage(kind: ClientKind.ssh),
                   ),
                 ),
-                icon: const Icon(Icons.terminal),
-                label: const Text('SSH-клиент'),
+                child: const Text('SSH-клиент'),
               ),
             ],
           ),
@@ -81,15 +79,16 @@ class _ClientPageState extends State<ClientPage> {
   late final TextEditingController _host;
   late final TextEditingController _port;
   late final TextEditingController _user;
-  final _password = TextEditingController();
+  late final TextEditingController _password;
   final _command = TextEditingController();
+  final _filePath = TextEditingController();
   final _scroll = ScrollController();
   final _lines = <String>[];
   FTPConnect? _ftp;
   SSHClient? _ssh;
   bool _connected = false;
+  bool _showTerminal = false;
   bool _busy = false;
-  bool _hidePassword = true;
 
   bool get _isFtp => widget.kind == ClientKind.ftp;
 
@@ -101,6 +100,9 @@ class _ClientPageState extends State<ClientPage> {
     );
     _port = TextEditingController(text: _isFtp ? '21' : '22');
     _user = TextEditingController(text: _isFtp ? 'ftpiu8' : 'root');
+    _password = TextEditingController(
+      text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0',
+    );
   }
 
   @override
@@ -113,6 +115,7 @@ class _ClientPageState extends State<ClientPage> {
     _user.dispose();
     _password.dispose();
     _command.dispose();
+    _filePath.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -143,8 +146,9 @@ class _ClientPageState extends State<ClientPage> {
           port: port,
           user: _user.text.trim(),
           pass: _password.text,
-          timeout: 120,
-          supportIPV6: false,
+          showLog: false,
+          timeout: 20,
+          supportIPV6: true,
         );
         if (!await ftp.connect()) {
           throw StateError('Сервер отклонил подключение');
@@ -178,7 +182,11 @@ class _ClientPageState extends State<ClientPage> {
         _ssh = ssh;
       }
       if (!mounted) return;
-      setState(() => _connected = true);
+      setState(() {
+        _connected = true;
+        _showTerminal = true;
+        _lines.clear();
+      });
       _append('Подключено к $host:$port');
     } catch (error) {
       _showError('Не удалось подключиться: $error');
@@ -200,11 +208,35 @@ class _ClientPageState extends State<ClientPage> {
     _append('> $command');
     setState(() => _busy = true);
     try {
-      _append(_isFtp ? await _ftpCommand(command) : await _sshCommand(command));
+      _append(
+        _isFtp
+            ? await _ftpCommand(command).timeout(const Duration(seconds: 30))
+            : await _sshCommand(command),
+      );
     } catch (error) {
-      _append('Ошибка: $error');
+      _reportCommandError(error);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _reportCommandError(Object error) {
+    final timedOut =
+        error is TimeoutException ||
+        error is FTPConnectException &&
+            error.message.toLowerCase().contains('timeout');
+    if (_isFtp && timedOut) {
+      final ftp = _ftp;
+      _ftp = null;
+      _connected = false;
+      if (ftp != null) {
+        unawaited(ftp.disconnect().catchError((Object _) => false));
+      }
+      _append(
+        'Превышено время ожидания FTP',
+      );
+    } else {
+      _append('Ошибка: $error');
     }
   }
 
@@ -246,84 +278,99 @@ class _ClientPageState extends State<ClientPage> {
   }
 
   Future<String> _sshCommand(String command) async {
-    final result = await _ssh!.runWithResult(command);
-    final output = utf8.decode(result.output, allowMalformed: true).trimRight();
-    if (output.isNotEmpty) return output;
-    if (result.exitCode != null && result.exitCode != 0) {
-      return 'Код завершения: ${result.exitCode}';
-    }
-    return '';
+    final output = await _ssh!.run(command);
+    return utf8.decode(output, allowMalformed: true);
   }
 
   Future<void> _upload() async {
     if (!_connected || _busy || !_isFtp) return;
-    String? path;
-    try {
-      path = await _pickFile();
-    } catch (error) {
-      _showError('Не удалось выбрать файл: $error');
-      return;
-    }
-    if (path == null || !mounted) return;
-    final file = File(path);
-    final name = file.uri.pathSegments.last;
     setState(() => _busy = true);
-    _append('> put $name');
     try {
-      final success = await _ftp!.uploadFile(file, sRemoteName: name);
-      _append(success ? 'Файл $name отправлен' : 'Отправка не удалась');
+      final path = await _selectFilePath();
+      if (path == null || !mounted) return;
+      final file = File(path);
+      _append('> put "$path"');
+      if (!await file.exists()) {
+        throw FileSystemException('Файл не найден', path);
+      }
+      final success = await _ftp!
+          .uploadFile(file)
+          .timeout(const Duration(minutes: 2));
+      _append(
+        success
+            ? 'Файл ${file.uri.pathSegments.last} отправлен'
+            : 'Отправка не удалась',
+      );
     } catch (error) {
-      _append('Ошибка отправки: $error');
+      _reportCommandError(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<String?> _pickFile() async {
-    if (!Platform.isWindows) {
-      throw UnsupportedError('Выбор файла доступен в версии для Windows');
-    }
-    const script = r'''
-Add-Type -AssemblyName System.Windows.Forms
-$dialog = New-Object System.Windows.Forms.OpenFileDialog
-$dialog.CheckFileExists = $true
-$dialog.Multiselect = $false
-$dialog.Title = 'Выберите файл для FTP'
-if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-  [Console]::Write([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($dialog.FileName)))
-}
-$dialog.Dispose()
-''';
-    final result = await Process.run('powershell.exe', [
-      '-NoProfile',
-      '-STA',
-      '-WindowStyle',
-      'Hidden',
-      '-Command',
-      script,
-    ]);
-    if (result.exitCode != 0) {
-      throw ProcessException(
-        'powershell.exe',
-        const [],
-        result.stderr.toString().trim(),
-        result.exitCode,
-      );
-    }
-    final encoded = result.stdout.toString().trim();
-    return encoded.isEmpty ? null : utf8.decode(base64.decode(encoded));
+  Future<String?> _selectFilePath() {
+    final formKey = GlobalKey<FormState>();
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        void submit() {
+          if (!formKey.currentState!.validate()) return;
+          var path = _filePath.text.trim();
+          if (path.length >= 2 && path.startsWith('"') && path.endsWith('"')) {
+            path = path.substring(1, path.length - 1);
+          }
+          Navigator.pop(dialogContext, path);
+        }
+
+        return AlertDialog(
+          title: const Text('Отправить файл'),
+          content: SizedBox(
+            width: 500,
+            child: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: _filePath,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Путь к файлу',
+                  hintText: r'C:\Users\user\Documents\file.txt',
+                ),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Укажите путь к файлу'
+                    : null,
+                onFieldSubmitted: (_) => submit(),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Отмена'),
+            ),
+            FilledButton(onPressed: submit, child: const Text('Отправить')),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(_isFtp ? 'FTP-клиент' : 'SSH-клиент')),
+    appBar: AppBar(
+      leadingWidth: 90,
+      leading: TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Назад'),
+      ),
+      title: Text(_isFtp ? 'FTP-клиент' : 'SSH-клиент'),
+    ),
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: _connected ? _buildTerminal() : _buildForm(),
+            child: _showTerminal ? _buildTerminal() : _buildForm(),
           ),
         ),
       ),
@@ -361,16 +408,8 @@ $dialog.Dispose()
         ),
         TextFormField(
           controller: _password,
-          obscureText: _hidePassword,
-          decoration: InputDecoration(
-            labelText: 'Пароль',
-            suffixIcon: IconButton(
-              onPressed: () => setState(() => _hidePassword = !_hidePassword),
-              icon: Icon(
-                _hidePassword ? Icons.visibility : Icons.visibility_off,
-              ),
-            ),
-          ),
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Пароль'),
           onFieldSubmitted: (_) => _connect(),
         ),
         const SizedBox(height: 24),
@@ -410,11 +449,17 @@ $dialog.Dispose()
         ),
       ),
       const SizedBox(height: 12),
+      if (!_connected) ...[
+        FilledButton(
+          onPressed: () => setState(() => _showTerminal = false),
+          child: const Text('Подключиться заново'),
+        ),
+        const SizedBox(height: 8),
+      ],
       if (_isFtp) ...[
-        OutlinedButton.icon(
-          onPressed: _busy ? null : _upload,
-          icon: const Icon(Icons.upload_file),
-          label: const Text('Отправить файл'),
+        OutlinedButton(
+          onPressed: _busy || !_connected ? null : _upload,
+          child: const Text('Отправить файл'),
         ),
         const SizedBox(height: 8),
       ],
@@ -423,7 +468,7 @@ $dialog.Dispose()
           Expanded(
             child: TextField(
               controller: _command,
-              enabled: !_busy,
+              enabled: !_busy && _connected,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: 'Введите команду',
@@ -433,10 +478,9 @@ $dialog.Dispose()
             ),
           ),
           const SizedBox(width: 8),
-          IconButton.filled(
-            tooltip: 'Отправить',
-            onPressed: _busy ? null : _sendCommand,
-            icon: const Icon(Icons.send),
+          FilledButton(
+            onPressed: _busy || !_connected ? null : _sendCommand,
+            child: const Text('Отправить'),
           ),
         ],
       ),
