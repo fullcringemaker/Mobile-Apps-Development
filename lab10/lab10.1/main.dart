@@ -75,7 +75,6 @@ class ClientPage extends StatefulWidget {
 }
 
 class _ClientPageState extends State<ClientPage> {
-  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _host;
   late final TextEditingController _port;
   late final TextEditingController _user;
@@ -95,14 +94,10 @@ class _ClientPageState extends State<ClientPage> {
   @override
   void initState() {
     super.initState();
-    _host = TextEditingController(
-      text: _isFtp ? 'students.yss.su' : 'net11.yss.su',
-    );
+    _host = TextEditingController(text: _isFtp ? 'students.yss.su' : 'net11.yss.su');
     _port = TextEditingController(text: _isFtp ? '21' : '22');
     _user = TextEditingController(text: _isFtp ? 'ftpiu8' : 'root');
-    _password = TextEditingController(
-      text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0',
-    );
+    _password = TextEditingController(text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0');
   }
 
   @override
@@ -135,11 +130,11 @@ class _ClientPageState extends State<ClientPage> {
   }
 
   Future<void> _connect() async {
-    if (_busy || !_formKey.currentState!.validate()) return;
+    if (_busy) return;
     setState(() => _busy = true);
     final host = _host.text.trim();
-    final port = int.parse(_port.text.trim());
     try {
+      final port = int.parse(_port.text.trim());
       if (_isFtp) {
         final ftp = FTPConnect(
           host,
@@ -197,8 +192,7 @@ class _ClientPageState extends State<ClientPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _sendCommand() async {
@@ -208,11 +202,7 @@ class _ClientPageState extends State<ClientPage> {
     _append('> $command');
     setState(() => _busy = true);
     try {
-      _append(
-        _isFtp
-            ? await _ftpCommand(command).timeout(const Duration(seconds: 30))
-            : await _sshCommand(command),
-      );
+      _append(_isFtp ? await _ftpCommand(command) : await _sshCommand(command));
     } catch (error) {
       _reportCommandError(error);
     } finally {
@@ -232,9 +222,7 @@ class _ClientPageState extends State<ClientPage> {
       if (ftp != null) {
         unawaited(ftp.disconnect().catchError((Object _) => false));
       }
-      _append(
-        'Превышено время ожидания FTP',
-      );
+      _append('Превышено время ожидания FTP');
     } else {
       _append('Ошибка: $error');
     }
@@ -242,13 +230,14 @@ class _ClientPageState extends State<ClientPage> {
 
   Future<String> _ftpCommand(String input) async {
     final ftp = _ftp!;
-    final split = input.indexOf(' ');
+    final split = input.indexOf(RegExp(r'\s'));
     final verb = (split < 0 ? input : input.substring(0, split)).toLowerCase();
     final argument = split < 0 ? '' : input.substring(split + 1).trim();
+    if (verb == 'put') return _uploadFile(argument);
     if (verb == 'ls' || verb == 'dir' || verb == 'list') {
-      final entries = await ftp.listDirectoryContent(
-        argument.isEmpty ? null : argument,
-      );
+      final entries = await ftp
+          .listDirectoryContent(argument.isEmpty ? null : argument)
+          .timeout(const Duration(seconds: 30));
       if (entries.isEmpty) return 'Каталог пуст';
       return entries
           .map(
@@ -258,12 +247,6 @@ class _ClientPageState extends State<ClientPage> {
           )
           .join('\n');
     }
-    if ({'put', 'get', 'retr', 'stor'}.contains(verb)) {
-      return 'Для отправки файла используйте кнопку «Отправить файл».';
-    }
-    if ({'mlsd', 'nlst'}.contains(verb)) {
-      return 'Для просмотра каталога используйте ls.';
-    }
     final ftpVerb = switch (verb) {
       'cd' => 'CWD',
       'mkdir' => 'MKD',
@@ -271,9 +254,9 @@ class _ClientPageState extends State<ClientPage> {
       'rm' => 'DELE',
       _ => verb.toUpperCase(),
     };
-    final reply = await ftp.sendCustomCommand(
-      argument.isEmpty ? ftpVerb : '$ftpVerb $argument',
-    );
+    final reply = await ftp
+        .sendCustomCommand(argument.isEmpty ? ftpVerb : '$ftpVerb $argument')
+        .timeout(const Duration(seconds: 30));
     return reply.message;
   }
 
@@ -288,24 +271,29 @@ class _ClientPageState extends State<ClientPage> {
     try {
       final path = await _selectFilePath();
       if (path == null || !mounted) return;
-      final file = File(path);
-      _append('> put "$path"');
-      if (!await file.exists()) {
-        throw FileSystemException('Файл не найден', path);
-      }
-      final success = await _ftp!
-          .uploadFile(file)
-          .timeout(const Duration(minutes: 2));
-      _append(
-        success
-            ? 'Файл ${file.uri.pathSegments.last} отправлен'
-            : 'Отправка не удалась',
-      );
+      _append('> put $path');
+      _append(await _uploadFile(path));
     } catch (error) {
       _reportCommandError(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<String> _uploadFile(String path) async {
+    var filePath = path.trim();
+    if (filePath.length >= 2 &&
+        ((filePath.startsWith('"') && filePath.endsWith('"')) ||
+            (filePath.startsWith("'") && filePath.endsWith("'")))) {
+      filePath = filePath.substring(1, filePath.length - 1);
+    }
+    final file = File(filePath);
+    final success = await _ftp!
+        .uploadFile(file)
+        .timeout(const Duration(minutes: 2));
+    return success
+        ? 'Файл ${file.uri.pathSegments.last} отправлен'
+        : 'Отправка не удалась';
   }
 
   Future<String?> _selectFilePath() {
@@ -315,13 +303,8 @@ class _ClientPageState extends State<ClientPage> {
       builder: (dialogContext) {
         void submit() {
           if (!formKey.currentState!.validate()) return;
-          var path = _filePath.text.trim();
-          if (path.length >= 2 && path.startsWith('"') && path.endsWith('"')) {
-            path = path.substring(1, path.length - 1);
-          }
-          Navigator.pop(dialogContext, path);
+          Navigator.pop(dialogContext, _filePath.text.trim());
         }
-
         return AlertDialog(
           title: const Text('Отправить файл'),
           content: SizedBox(
@@ -333,7 +316,6 @@ class _ClientPageState extends State<ClientPage> {
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'Путь к файлу',
-                  hintText: r'C:\Users\user\Documents\file.txt',
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Укажите путь к файлу'
@@ -377,48 +359,34 @@ class _ClientPageState extends State<ClientPage> {
     ),
   );
 
-  Widget _buildForm() => Form(
-    key: _formKey,
-    child: ListView(
-      shrinkWrap: true,
-      children: [
-        TextFormField(
-          controller: _host,
-          decoration: const InputDecoration(labelText: 'Хост'),
-          validator: (value) =>
-              value == null || value.trim().isEmpty ? 'Укажите хост' : null,
-        ),
-        TextFormField(
-          controller: _port,
-          decoration: const InputDecoration(labelText: 'Порт'),
-          keyboardType: TextInputType.number,
-          validator: (value) {
-            final port = int.tryParse(value?.trim() ?? '');
-            return port == null || port < 1 || port > 65535
-                ? 'Укажите порт от 1 до 65535'
-                : null;
-          },
-        ),
-        TextFormField(
-          controller: _user,
-          decoration: const InputDecoration(labelText: 'Пользователь'),
-          validator: (value) => value == null || value.trim().isEmpty
-              ? 'Укажите пользователя'
-              : null,
-        ),
-        TextFormField(
-          controller: _password,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Пароль'),
-          onFieldSubmitted: (_) => _connect(),
-        ),
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: _busy ? null : _connect,
-          child: Text(_busy ? 'Подключение...' : 'Подключиться'),
-        ),
-      ],
-    ),
+  Widget _buildForm() => ListView(
+    shrinkWrap: true,
+    children: [
+      TextField(
+        controller: _host,
+        decoration: const InputDecoration(labelText: 'Хост'),
+      ),
+      TextField(
+        controller: _port,
+        decoration: const InputDecoration(labelText: 'Порт'),
+        keyboardType: TextInputType.number,
+      ),
+      TextField(
+        controller: _user,
+        decoration: const InputDecoration(labelText: 'Пользователь'),
+      ),
+      TextField(
+        controller: _password,
+        obscureText: true,
+        decoration: const InputDecoration(labelText: 'Пароль'),
+        onSubmitted: (_) => _connect(),
+      ),
+      const SizedBox(height: 24),
+      FilledButton(
+        onPressed: _busy ? null : _connect,
+        child: const Text('Подключиться'),
+      ),
+    ],
   );
 
   Widget _buildTerminal() => Column(
@@ -471,7 +439,6 @@ class _ClientPageState extends State<ClientPage> {
               enabled: !_busy && _connected,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: 'Введите команду',
                 isDense: true,
               ),
               onSubmitted: (_) => _sendCommand(),
