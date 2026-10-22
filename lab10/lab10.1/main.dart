@@ -85,6 +85,10 @@ class _ClientPageState extends State<ClientPage> {
   final _lines = <String>[];
   FTPConnect? _ftp;
   SSHClient? _ssh;
+  SSHSession? sshSession;
+  StreamSubscription<String>? sshOutputSubscription;
+  StreamSubscription<String>? sshErrorSubscription;
+  int? sshOutputIndex;
   bool _connected = false;
   bool _showTerminal = false;
   bool _busy = false;
@@ -94,16 +98,23 @@ class _ClientPageState extends State<ClientPage> {
   @override
   void initState() {
     super.initState();
-    _host = TextEditingController(text: _isFtp ? 'students.yss.su' : 'net11.yss.su');
+    _host = TextEditingController(
+      text: _isFtp ? 'students.yss.su' : 'net11.yss.su',
+    );
     _port = TextEditingController(text: _isFtp ? '21' : '22');
     _user = TextEditingController(text: _isFtp ? 'ftpiu8' : 'root');
-    _password = TextEditingController(text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0');
+    _password = TextEditingController(
+      text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0',
+    );
   }
 
   @override
   void dispose() {
     final ftp = _ftp;
     if (ftp != null) ftp.disconnect().catchError((Object _) => false);
+    sshOutputSubscription?.cancel();
+    sshErrorSubscription?.cancel();
+    sshSession?.close();
     _ssh?.close();
     _host.dispose();
     _port.dispose();
@@ -118,6 +129,23 @@ class _ClientPageState extends State<ClientPage> {
   void _append(String value) {
     if (!mounted || value.trim().isEmpty) return;
     setState(() => _lines.add(value.trimRight()));
+    scrollToEnd();
+  }
+
+  void appendSshOutput(String text) {
+    if (!mounted || text.isEmpty) return;
+    setState(() {
+      if (sshOutputIndex == null) {
+        sshOutputIndex = _lines.length;
+        _lines.add(text);
+      } else {
+        _lines[sshOutputIndex!] += text;
+      }
+    });
+    scrollToEnd();
+  }
+
+  void scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(
@@ -166,11 +194,13 @@ class _ClientPageState extends State<ClientPage> {
         );
         try {
           await ssh.authenticated.timeout(const Duration(seconds: 30));
+          sshSession = await ssh.execute('sh');
         } catch (_) {
           ssh.close();
           rethrow;
         }
         if (!mounted) {
+          sshSession?.close();
           ssh.close();
           return;
         }
@@ -183,6 +213,30 @@ class _ClientPageState extends State<ClientPage> {
         _lines.clear();
       });
       _append('Подключено к $host:$port');
+      if (!_isFtp) {
+        final session = sshSession!;
+        sshOutputIndex = null;
+        sshOutputSubscription = session.stdout
+            .cast<List<int>>()
+            .transform(const Utf8Decoder(allowMalformed: true))
+            .listen(appendSshOutput, onError: _reportCommandError);
+        sshErrorSubscription = session.stderr
+            .cast<List<int>>()
+            .transform(const Utf8Decoder(allowMalformed: true))
+            .listen(appendSshOutput, onError: _reportCommandError);
+        unawaited(
+          session.done.then<void>(
+            (_) {
+              if (mounted) setState(() => _connected = false);
+            },
+            onError: (Object error) {
+              if (!mounted) return;
+              setState(() => _connected = false);
+              _reportCommandError(error);
+            },
+          ),
+        );
+      }
     } catch (error) {
       _showError('Не удалось подключиться: $error');
     } finally {
@@ -200,9 +254,14 @@ class _ClientPageState extends State<ClientPage> {
     if (!_connected || _busy || command.isEmpty) return;
     _command.clear();
     _append('> $command');
+    sshOutputIndex = null;
     setState(() => _busy = true);
     try {
-      _append(_isFtp ? await _ftpCommand(command) : await _sshCommand(command));
+      if (_isFtp) {
+        _append(await _ftpCommand(command));
+      } else {
+        sendSshCommand(command);
+      }
     } catch (error) {
       _reportCommandError(error);
     } finally {
@@ -260,9 +319,8 @@ class _ClientPageState extends State<ClientPage> {
     return reply.message;
   }
 
-  Future<String> _sshCommand(String command) async {
-    final output = await _ssh!.run(command);
-    return utf8.decode(output, allowMalformed: true);
+  void sendSshCommand(String command) {
+    sshSession!.write(utf8.encode('$command\n'));
   }
 
   Future<void> _upload() async {
@@ -305,6 +363,7 @@ class _ClientPageState extends State<ClientPage> {
           if (!formKey.currentState!.validate()) return;
           Navigator.pop(dialogContext, _filePath.text.trim());
         }
+
         return AlertDialog(
           title: const Text('Отправить файл'),
           content: SizedBox(
@@ -314,9 +373,7 @@ class _ClientPageState extends State<ClientPage> {
               child: TextFormField(
                 controller: _filePath,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Путь к файлу',
-                ),
+                decoration: const InputDecoration(labelText: 'Путь к файлу'),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Укажите путь к файлу'
                     : null,
