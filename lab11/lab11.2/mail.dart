@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:enough_mail/enough_mail.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html;
@@ -21,12 +20,10 @@ class Mail {
       await client.connectToServer('smtp.mail.ru', 465, isSecure: true);
       await client.ehlo();
       await client.authenticate(address, _password, AuthMechanism.login);
-      final greeting =
-          'Привет, ${subscriber['name']} ${subscriber['surname']}.';
+      final greeting = 'Привет, ${subscriber['name']} ${subscriber['surname']}.';
       const escape = HtmlEscape(HtmlEscapeMode.element);
       final body = escape.convert(text).replaceAll('\n', '<br>');
-      final builder =
-          MessageBuilder.prepareMultipartAlternativeMessage(
+      final builder = MessageBuilder.prepareMultipartAlternativeMessage(
               transferEncoding: TransferEncoding.base64,
             )
             ..from = [MailAddress(null, address)]
@@ -87,8 +84,7 @@ class Mail {
       final search = await client.uidSearchMessages(
         searchCriteria: 'NOT DELETED',
       );
-      final ids =
-          (search.matchingSequence?.toList() ?? [])
+      final ids = (search.matchingSequence?.toList() ?? [])
               .where((id) => !hidden.contains('${box.uidValidity}:$id'))
               .toList()
             ..sort((a, b) => b.compareTo(a));
@@ -108,8 +104,7 @@ class Mail {
                   .map((sender) => sender.email)
                   .join(', '),
               'subject': message.decodeSubject() ?? '(Без темы)',
-              'body':
-                  message.decodeTextPlainPart() ??
+              'body': message.decodeTextPlainPart() ??
                   html.parse(message.decodeTextHtmlPart() ?? '').body?.text ??
                   '',
             },
