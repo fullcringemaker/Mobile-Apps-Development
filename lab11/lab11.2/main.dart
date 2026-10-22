@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,20 +8,7 @@ import 'database.dart';
 import 'mail.dart';
 
 void main() => runApp(
-  const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: kIsWeb
-        ? Scaffold(
-            body: Center(
-              child: Text(
-                'Выберите Windows или Android для запуска.\n'
-                'Браузер не поддерживает прямое подключение к MySQL и почте.',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          )
-        : MailingApp(),
-  ),
+  const MaterialApp(debugShowCheckedModeBanner: false, home: MailingApp()),
 );
 
 class MailingApp extends StatefulWidget {
