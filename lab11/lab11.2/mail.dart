@@ -8,11 +8,7 @@ class Mail {
   static const address = 'dmtrfmnk10@mail.ru';
   static const _password = '6mp6YB6liRw5m4SjRxL4';
 
-  Future<void> send(
-    Map<String, dynamic> subscriber,
-    String subject,
-    String text,
-  ) async {
+  Future<void> send(Map<String, dynamic> subscriber, String subject, String text) async {
     final emblem = await rootBundle.load('lib/emblem.png');
     final recipient = MailAddress(null, (subscriber['mail'] as String).trim());
     final client = SmtpClient('mail.ru');
