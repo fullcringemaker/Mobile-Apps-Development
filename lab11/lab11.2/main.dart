@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'database.dart';
 import 'mail.dart';
 
@@ -223,9 +221,7 @@ class _MailingAppState extends State<MailingApp> with WidgetsBindingObserver {
                 feedback: _card(category),
                 childWhenDragging: const SizedBox(width: 100, height: 72),
                 onDragEnd: (details) {
-                  final box =
-                      _receiver.currentContext!.findRenderObject()!
-                          as RenderBox;
+                  final box = _receiver.currentContext!.findRenderObject() as RenderBox;
                   final target = box.localToGlobal(Offset.zero) & box.size;
                   final card = details.offset & _cardSize;
                   if (card.left <= target.right &&
