@@ -33,9 +33,7 @@ Future<void> createTable() => _query((connection) async {
   );
 });
 
-Future<List<Map<String, dynamic>>> getSubscribers() => _query((
-  connection,
-) async {
+Future<List<Map<String, dynamic>>> getSubscribers() => _query((connection) async {
   final rows = await connection.query('SELECT * FROM Trofimenko ORDER BY id');
   return rows.map((row) => row.toColumnMap()).toList();
 });
