@@ -241,7 +241,6 @@ class AndroidBluetoothMessenger:
         finally:
             self.stop()
 
-
 def scan_devices():
     """Scan for nearby Bluetooth devices"""
     print("Scanning for Bluetooth devices...")
@@ -269,8 +268,7 @@ def main():
     )
     
     parser.add_argument('--scan', action='store_true', help='Scan for nearby Bluetooth devices')
-    parser.add_argument('--connect', '-c', type=str, metavar='ADDRESS', 
-                       help='Connect to device at specified MAC address (client mode)')
+    parser.add_argument('--connect', '-c', type=str, metavar='ADDRESS', help='Connect to device at specified MAC address (client mode)')
     parser.add_argument('--send', '-s', type=str, help='Send a message to the Android device')
     parser.add_argument('--port', '-p', type=int, default=1, help='RFCOMM port number (default: 1)')
     parser.add_argument('--interactive', '-i', action='store_true', help='Interactive mode (default if no args)')
