@@ -260,7 +260,6 @@ def scan_devices():
     except Exception as e:
         print(f"Error scanning for devices: {e}")
 
-
 def main():
     parser = argparse.ArgumentParser(
         description='Bluetooth Messenger - Android / PC text messages over Bluetooth',
@@ -286,7 +285,6 @@ def main():
         parser.error('--serial cannot be combined with --connect or --scan')
     if not args.serial and bluetooth is None:
         parser.error('PyBluez is unavailable. On Windows use --serial COM3 with an incoming Bluetooth port.')
-   
     
     if args.scan:
         scan_devices()
