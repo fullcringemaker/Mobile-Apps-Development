@@ -240,7 +240,6 @@ class AndroidBluetoothMessenger:
         finally:
             self.stop()
 
-
 def scan_devices():
     """Scan for nearby Bluetooth devices"""
     print("Scanning for Bluetooth devices...")
@@ -259,7 +258,6 @@ def scan_devices():
             print(f"    Address: {addr}\n")
     except Exception as e:
         print(f"Error scanning for devices: {e}")
-
 
 def main():
     parser = argparse.ArgumentParser(
