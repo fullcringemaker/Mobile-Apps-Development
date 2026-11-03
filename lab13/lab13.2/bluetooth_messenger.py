@@ -162,7 +162,7 @@ class AndroidBluetoothMessenger:
                     disconnected_shown = False
             except ConnectionError as e:
                 if not disconnected_shown:
-                    print(f"\n✗ Device disconnected: {e}")
+                    print(f"\nX Device disconnected: {e}")
                     print("\nThis usually means:")
                     print("  1. The Android app (Bluetooth Messenger) was closed")
                     print("  2. Bluetooth was turned off on the device")
