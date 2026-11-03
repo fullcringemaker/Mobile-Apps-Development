@@ -257,7 +257,7 @@ class _BluetoothMessengerPageState extends State<BluetoothMessengerPage> {
                               dense: true,
                               selected: selected,
                               title: Text(device['name'] as String),
-                              subtitle: Text('${device['address']} • '
+                              subtitle: Text('${device['address']} - '
                                   '${device['paired'] == true ? 'Сопряжено' : 'Новое устройство'}'),
                               trailing: selected ? const Icon(Icons.check_circle) : null,
                               onTap: _isConnecting ? null : () => _selectDevice(device),
