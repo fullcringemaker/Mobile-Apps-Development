@@ -173,7 +173,7 @@ class AndroidBluetoothMessenger:
                 break
             except Exception as e:
                 if not disconnected_shown:
-                    print(f"\n✗ Error in receive loop: {e}")
+                    print(f"\nX Error in receive loop: {e}")
                     disconnected_shown = True
                 self.running = False
                 break
