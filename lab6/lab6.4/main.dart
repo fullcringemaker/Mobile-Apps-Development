@@ -716,6 +716,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
       ),
     );
   }
+  
   List<Widget> buildFunctionSpecificControls() {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
