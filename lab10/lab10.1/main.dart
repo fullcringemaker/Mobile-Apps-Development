@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:ftpconnect/ftpconnect.dart';
 
 void main() => runApp(const ClientApp());
 
-enum ClientKind { ftp, ssh }
+enum ClientKind {ftp, ssh}
 
 class ClientApp extends StatelessWidget {
   const ClientApp({super.key});
@@ -75,60 +76,54 @@ class ClientPage extends StatefulWidget {
 }
 
 class _ClientPageState extends State<ClientPage> {
-  late final TextEditingController _host;
-  late final TextEditingController _port;
-  late final TextEditingController _user;
-  late final TextEditingController _password;
-  final _command = TextEditingController();
-  final _filePath = TextEditingController();
-  final _scroll = ScrollController();
-  final _lines = <String>[];
-  FTPConnect? _ftp;
-  SSHClient? _ssh;
+  late final TextEditingController hostController;
+  late final TextEditingController portController;
+  late final TextEditingController userController;
+  late final TextEditingController passwordController;
+  final commandController = TextEditingController();
+  final scrollController = ScrollController();
+  final terminalLines = <String>[];
+  FTPConnect? ftpClient;
+  SSHClient? sshClient;
   SSHSession? sshSession;
   StreamSubscription<String>? sshOutputSubscription;
   StreamSubscription<String>? sshErrorSubscription;
   int? sshOutputIndex;
-  bool _connected = false;
-  bool _showTerminal = false;
-  bool _busy = false;
+  bool connected = false;
+  bool showTerminal = false;
+  bool busy = false;
 
-  bool get _isFtp => widget.kind == ClientKind.ftp;
+  bool get isFtp => widget.kind == ClientKind.ftp;
 
   @override
   void initState() {
     super.initState();
-    _host = TextEditingController(
-      text: _isFtp ? 'students.yss.su' : 'net11.yss.su',
-    );
-    _port = TextEditingController(text: _isFtp ? '21' : '22');
-    _user = TextEditingController(text: _isFtp ? 'ftpiu8' : 'root');
-    _password = TextEditingController(
-      text: _isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0',
-    );
+    hostController = TextEditingController(text: isFtp ? 'students.yss.su' : 'net11.yss.su');
+    portController = TextEditingController(text: isFtp ? '21' : '22');
+    userController = TextEditingController(text: isFtp ? 'ftpiu8' : 'root');
+    passwordController = TextEditingController(text: isFtp ? '3Ru7yOTA' : 'rqUHO6IG9Du0');
   }
 
   @override
   void dispose() {
-    final ftp = _ftp;
+    final ftp = ftpClient;
     if (ftp != null) ftp.disconnect().catchError((Object _) => false);
     sshOutputSubscription?.cancel();
     sshErrorSubscription?.cancel();
     sshSession?.close();
-    _ssh?.close();
-    _host.dispose();
-    _port.dispose();
-    _user.dispose();
-    _password.dispose();
-    _command.dispose();
-    _filePath.dispose();
-    _scroll.dispose();
+    sshClient?.close();
+    hostController.dispose();
+    portController.dispose();
+    userController.dispose();
+    passwordController.dispose();
+    commandController.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
-  void _append(String value) {
+  void append(String value) {
     if (!mounted || value.trim().isEmpty) return;
-    setState(() => _lines.add(value.trimRight()));
+    setState(() => terminalLines.add(value.trimRight()));
     scrollToEnd();
   }
 
@@ -136,10 +131,10 @@ class _ClientPageState extends State<ClientPage> {
     if (!mounted || text.isEmpty) return;
     setState(() {
       if (sshOutputIndex == null) {
-        sshOutputIndex = _lines.length;
-        _lines.add(text);
+        sshOutputIndex = terminalLines.length;
+        terminalLines.add(text);
       } else {
-        _lines[sshOutputIndex!] += text;
+        terminalLines[sshOutputIndex!] += text;
       }
     });
     scrollToEnd();
@@ -147,9 +142,9 @@ class _ClientPageState extends State<ClientPage> {
 
   void scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
-        _scroll.animateTo(
-          _scroll.position.maxScrollExtent,
+      if (scrollController.hasClients) {
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
         );
@@ -157,18 +152,18 @@ class _ClientPageState extends State<ClientPage> {
     });
   }
 
-  Future<void> _connect() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    final host = _host.text.trim();
+  Future<void> connect() async {
+    if (busy) return;
+    setState(() => busy = true);
+    final host = hostController.text.trim();
     try {
-      final port = int.parse(_port.text.trim());
-      if (_isFtp) {
+      final port = int.parse(portController.text.trim());
+      if (isFtp) {
         final ftp = FTPConnect(
           host,
           port: port,
-          user: _user.text.trim(),
-          pass: _password.text,
+          user: userController.text.trim(),
+          pass: passwordController.text,
           showLog: false,
           timeout: 20,
           supportIPV6: true,
@@ -180,7 +175,7 @@ class _ClientPageState extends State<ClientPage> {
           await ftp.disconnect();
           return;
         }
-        _ftp = ftp;
+        ftpClient = ftp;
       } else {
         final socket = await SSHSocket.connect(
           host,
@@ -189,8 +184,8 @@ class _ClientPageState extends State<ClientPage> {
         );
         final ssh = SSHClient(
           socket,
-          username: _user.text.trim(),
-          onPasswordRequest: () => _password.text,
+          username: userController.text.trim(),
+          onPasswordRequest: () => passwordController.text,
         );
         try {
           await ssh.authenticated.timeout(const Duration(seconds: 30));
@@ -204,95 +199,104 @@ class _ClientPageState extends State<ClientPage> {
           ssh.close();
           return;
         }
-        _ssh = ssh;
+        sshClient = ssh;
       }
       if (!mounted) return;
       setState(() {
-        _connected = true;
-        _showTerminal = true;
-        _lines.clear();
+        connected = true;
+        showTerminal = true;
+        terminalLines.clear();
       });
-      _append('Подключено к $host:$port');
-      if (!_isFtp) {
+      append('Подключено к $host:$port');
+      if (!isFtp) {
         final session = sshSession!;
         sshOutputIndex = null;
         sshOutputSubscription = session.stdout
             .cast<List<int>>()
             .transform(const Utf8Decoder(allowMalformed: true))
-            .listen(appendSshOutput, onError: _reportCommandError);
+            .listen(appendSshOutput, onError: reportCommandError);
         sshErrorSubscription = session.stderr
             .cast<List<int>>()
             .transform(const Utf8Decoder(allowMalformed: true))
-            .listen(appendSshOutput, onError: _reportCommandError);
+            .listen(appendSshOutput, onError: reportCommandError);
         unawaited(
           session.done.then<void>(
             (_) {
-              if (mounted) setState(() => _connected = false);
+              if (mounted) setState(() => connected = false);
             },
             onError: (Object error) {
               if (!mounted) return;
-              setState(() => _connected = false);
-              _reportCommandError(error);
+              setState(() => connected = false);
+              reportCommandError(error);
             },
           ),
         );
       }
     } catch (error) {
-      _showError('Не удалось подключиться: $error');
+      showError('Не удалось подключиться: $error');
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  void _showError(String message) {
+  void showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _sendCommand() async {
-    final command = _command.text.trim();
-    if (!_connected || _busy || command.isEmpty) return;
-    _command.clear();
-    _append('> $command');
+  Future<void> sendCommand() async {
+    final command = commandController.text.trim();
+    if (!connected || busy || command.isEmpty) return;
+    commandController.clear();
+    append('> $command');
     sshOutputIndex = null;
-    setState(() => _busy = true);
+    setState(() => busy = true);
     try {
-      if (_isFtp) {
-        _append(await _ftpCommand(command));
+      if (isFtp) {
+        append(await ftpCommand(command));
       } else {
         sendSshCommand(command);
       }
     } catch (error) {
-      _reportCommandError(error);
+      reportCommandError(error);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  void _reportCommandError(Object error) {
+  void reportCommandError(Object error) {
     final timedOut =
         error is TimeoutException ||
-        error is FTPConnectException &&
+            error is FTPConnectException &&
             error.message.toLowerCase().contains('timeout');
-    if (_isFtp && timedOut) {
-      final ftp = _ftp;
-      _ftp = null;
-      _connected = false;
+    if (isFtp && timedOut) {
+      final ftp = ftpClient;
+      ftpClient = null;
+      connected = false;
       if (ftp != null) {
         unawaited(ftp.disconnect().catchError((Object _) => false));
       }
-      _append('Превышено время ожидания FTP');
+      append('Превышено время ожидания FTP');
     } else {
-      _append('Ошибка: $error');
+      append('Ошибка: $error');
     }
   }
 
-  Future<String> _ftpCommand(String input) async {
-    final ftp = _ftp!;
+  Future<String> ftpCommand(String input) async {
+    final ftp = ftpClient!;
     final split = input.indexOf(RegExp(r'\s'));
     final verb = (split < 0 ? input : input.substring(0, split)).toLowerCase();
     final argument = split < 0 ? '' : input.substring(split + 1).trim();
-    if (verb == 'put') return _uploadFile(argument);
+    if (verb == 'put') {
+      var path = argument;
+      if (path.length >= 2 &&
+          ((path.startsWith('"') && path.endsWith('"')) ||
+              (path.startsWith("'") && path.endsWith("'")))) {
+        path = path.substring(1, path.length - 1);
+      }
+      final file = File(path);
+      return uploadFile(file, file.uri.pathSegments.last);
+    }
     if (verb == 'ls' || verb == 'dir' || verb == 'list') {
       final entries = await ftp
           .listDirectoryContent(argument.isEmpty ? null : argument)
@@ -323,74 +327,26 @@ class _ClientPageState extends State<ClientPage> {
     sshSession!.write(utf8.encode('$command\n'));
   }
 
-  Future<void> _upload() async {
-    if (!_connected || _busy || !_isFtp) return;
-    setState(() => _busy = true);
+  Future<void> upload() async {
+    if (!connected || busy || !isFtp) return;
+    setState(() => busy = true);
     try {
-      final path = await _selectFilePath();
-      if (path == null || !mounted) return;
-      _append('> put $path');
-      _append(await _uploadFile(path));
+      final file = await openFile();
+      if (file == null || !mounted) return;
+      append('> put ${file.name}');
+      append(await uploadFile(File(file.path), file.name));
     } catch (error) {
-      _reportCommandError(error);
+      reportCommandError(error);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<String> _uploadFile(String path) async {
-    var filePath = path.trim();
-    if (filePath.length >= 2 &&
-        ((filePath.startsWith('"') && filePath.endsWith('"')) ||
-            (filePath.startsWith("'") && filePath.endsWith("'")))) {
-      filePath = filePath.substring(1, filePath.length - 1);
-    }
-    final file = File(filePath);
-    final success = await _ftp!
-        .uploadFile(file)
+  Future<String> uploadFile(File file, String name) async {
+    final success = await ftpClient!
+        .uploadFile(file, sRemoteName: name)
         .timeout(const Duration(minutes: 2));
-    return success
-        ? 'Файл ${file.uri.pathSegments.last} отправлен'
-        : 'Отправка не удалась';
-  }
-
-  Future<String?> _selectFilePath() {
-    final formKey = GlobalKey<FormState>();
-    return showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        void submit() {
-          if (!formKey.currentState!.validate()) return;
-          Navigator.pop(dialogContext, _filePath.text.trim());
-        }
-
-        return AlertDialog(
-          title: const Text('Отправить файл'),
-          content: SizedBox(
-            width: 500,
-            child: Form(
-              key: formKey,
-              child: TextFormField(
-                controller: _filePath,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Путь к файлу'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Укажите путь к файлу'
-                    : null,
-                onFieldSubmitted: (_) => submit(),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Отмена'),
-            ),
-            FilledButton(onPressed: submit, child: const Text('Отправить')),
-          ],
-        );
-      },
-    );
+    return success ? 'Файл $name отправлен' : 'Отправка не удалась';
   }
 
   @override
@@ -401,7 +357,7 @@ class _ClientPageState extends State<ClientPage> {
         onPressed: () => Navigator.pop(context),
         child: const Text('Назад'),
       ),
-      title: Text(_isFtp ? 'FTP-клиент' : 'SSH-клиент'),
+      title: Text(isFtp ? 'FTP-клиент' : 'SSH-клиент'),
     ),
     body: SafeArea(
       child: Center(
@@ -409,44 +365,44 @@ class _ClientPageState extends State<ClientPage> {
           constraints: const BoxConstraints(maxWidth: 900),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: _showTerminal ? _buildTerminal() : _buildForm(),
+            child: showTerminal ? buildTerminal() : buildForm(),
           ),
         ),
       ),
     ),
   );
 
-  Widget _buildForm() => ListView(
+  Widget buildForm() => ListView(
     shrinkWrap: true,
     children: [
       TextField(
-        controller: _host,
+        controller: hostController,
         decoration: const InputDecoration(labelText: 'Хост'),
       ),
       TextField(
-        controller: _port,
+        controller: portController,
         decoration: const InputDecoration(labelText: 'Порт'),
         keyboardType: TextInputType.number,
       ),
       TextField(
-        controller: _user,
+        controller: userController,
         decoration: const InputDecoration(labelText: 'Пользователь'),
       ),
       TextField(
-        controller: _password,
+        controller: passwordController,
         obscureText: true,
         decoration: const InputDecoration(labelText: 'Пароль'),
-        onSubmitted: (_) => _connect(),
+        onSubmitted: (_) => connect(),
       ),
       const SizedBox(height: 24),
       FilledButton(
-        onPressed: _busy ? null : _connect,
+        onPressed: busy ? null : connect,
         child: const Text('Подключиться'),
       ),
     ],
   );
 
-  Widget _buildTerminal() => Column(
+  Widget buildTerminal() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Expanded(
@@ -456,13 +412,13 @@ class _ClientPageState extends State<ClientPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListView.builder(
-            controller: _scroll,
+            controller: scrollController,
             padding: const EdgeInsets.all(16),
-            itemCount: _lines.length,
+            itemCount: terminalLines.length,
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: SelectableText(
-                _lines[index],
+                terminalLines[index],
                 style: const TextStyle(
                   color: Color(0xFFE8F4ED),
                   fontFamily: 'monospace',
@@ -474,16 +430,16 @@ class _ClientPageState extends State<ClientPage> {
         ),
       ),
       const SizedBox(height: 12),
-      if (!_connected) ...[
+      if (!connected) ...[
         FilledButton(
-          onPressed: () => setState(() => _showTerminal = false),
+          onPressed: () => setState(() => showTerminal = false),
           child: const Text('Подключиться заново'),
         ),
         const SizedBox(height: 8),
       ],
-      if (_isFtp) ...[
+      if (isFtp) ...[
         OutlinedButton(
-          onPressed: _busy || !_connected ? null : _upload,
+          onPressed: busy || !connected ? null : upload,
           child: const Text('Отправить файл'),
         ),
         const SizedBox(height: 8),
@@ -492,18 +448,18 @@ class _ClientPageState extends State<ClientPage> {
         children: [
           Expanded(
             child: TextField(
-              controller: _command,
-              enabled: !_busy && _connected,
+              controller: commandController,
+              enabled: !busy && connected,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 isDense: true,
               ),
-              onSubmitted: (_) => _sendCommand(),
+              onSubmitted: (_) => sendCommand(),
             ),
           ),
           const SizedBox(width: 8),
           FilledButton(
-            onPressed: _busy || !_connected ? null : _sendCommand,
+            onPressed: busy || !connected ? null : sendCommand,
             child: const Text('Отправить'),
           ),
         ],
