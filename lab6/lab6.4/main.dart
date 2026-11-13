@@ -91,15 +91,11 @@ class _OptimizationPageState extends State<OptimizationPage> {
   double f(double x, double y) {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
-        return 2.0 * rastriginA + (x * x - rastriginA * math.cos(2.0 * math.pi * x)) +
-            (y * y - rastriginA * math.cos(2.0 * math.pi * y));
-
+        return 2.0 * rastriginA + (x * x - rastriginA * math.cos(2.0 * math.pi * x)) + (y * y - rastriginA * math.cos(2.0 * math.pi * y));
       case SurfaceFunction.rosenbrock:
         final double first = rosenbrockA - x;
         final double second = y - x * x;
-
         return first * first + rosenbrockB * second * second;
-
       case SurfaceFunction.schafferN2:
         final double sinValue = math.sin(x * x - y * y);
         final double numerator = sinValue * sinValue - 0.5;
@@ -113,10 +109,8 @@ class _OptimizationPageState extends State<OptimizationPage> {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
         return value * 0.08;
-
       case SurfaceFunction.rosenbrock:
         return value * 0.0003;
-
       case SurfaceFunction.schafferN2:
         return value * 8.0;
     }
@@ -126,10 +120,8 @@ class _OptimizationPageState extends State<OptimizationPage> {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
         return 'Функция Растригина';
-
       case SurfaceFunction.rosenbrock:
         return 'Функция Розенброка';
-
       case SurfaceFunction.schafferN2:
         return 'Функция Шаффера N2';
     }
@@ -139,10 +131,8 @@ class _OptimizationPageState extends State<OptimizationPage> {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
         return 'f(x, y) = 2A + (x^2 - A cos(2pix)) + (y^2 - A cos(2piy))';
-
       case SurfaceFunction.rosenbrock:
         return 'f(x, y) = (a - x)^2 + b(y - x^2)^2';
-
       case SurfaceFunction.schafferN2:
         return 'f(x, y) = 0.5 + (sin^2(x^2 - y^2) - 0.5) / (1 + 0.001(x^2 + y^2))^2';
     }
