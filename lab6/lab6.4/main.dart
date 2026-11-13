@@ -716,8 +716,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
       ),
     );
   }
-  List<Widget>
-  buildFunctionSpecificControls() {
+  List<Widget> buildFunctionSpecificControls() {
     switch (selectedFunction) {
       case SurfaceFunction.rastrigin:
         return [
@@ -736,7 +735,6 @@ class _OptimizationPageState extends State<OptimizationPage> {
             },
           ),
         ];
-
       case SurfaceFunction.rosenbrock:
         return [
           slider(
@@ -768,7 +766,6 @@ class _OptimizationPageState extends State<OptimizationPage> {
             },
           ),
         ];
-
       case SurfaceFunction.schafferN2:
         return [];
     }
