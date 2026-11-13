@@ -840,8 +840,7 @@ class _OptimizationPageState extends State<OptimizationPage> {
               vertical: 2,
             ),
             child: Text(
-              'Уровень: '
-                  '${contourLevel.toStringAsFixed(3)}',
+              'Уровень: ${contourLevel.toStringAsFixed(3)}',
             ),
           ),
           Expanded(
